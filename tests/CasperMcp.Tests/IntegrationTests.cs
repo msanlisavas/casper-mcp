@@ -11,13 +11,18 @@ namespace CasperMcp.Tests;
 /// Set CSPR_CLOUD_TESTNET_API_KEY environment variable or they use the public testnet key.
 /// </summary>
 [Collection("Integration")]
-public class IntegrationTests
+public class IntegrationTests : IAsyncLifetime
 {
     private readonly CasperCloudRestClient _client;
     private readonly CasperMcpOptions _options;
 
     // Known testnet public key (a validator on testnet)
     private const string TestPublicKey = "0106ca7c39cd272dbf21a86eeb3b36b7c26e2e9b94af64292419f7862936bca2ca";
+
+    // Rate-limit throttle: ensure minimum delay between tests to avoid CSPR Cloud TooManyRequests
+    private static readonly SemaphoreSlim _throttle = new(1, 1);
+    private static DateTime _lastTestStart = DateTime.MinValue;
+    private static readonly TimeSpan _delayBetweenTests = TimeSpan.FromMilliseconds(350);
 
     public IntegrationTests()
     {
@@ -28,6 +33,24 @@ public class IntegrationTests
         _client = new CasperCloudRestClient(config);
         _options = new CasperMcpOptions { Network = "testnet" };
     }
+
+    public async Task InitializeAsync()
+    {
+        await _throttle.WaitAsync();
+        try
+        {
+            var elapsed = DateTime.UtcNow - _lastTestStart;
+            if (elapsed < _delayBetweenTests)
+                await Task.Delay(_delayBetweenTests - elapsed);
+            _lastTestStart = DateTime.UtcNow;
+        }
+        finally
+        {
+            _throttle.Release();
+        }
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     // ==================== Network Tools ====================
 
