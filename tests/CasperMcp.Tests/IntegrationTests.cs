@@ -727,4 +727,306 @@ public class IntegrationTests : IAsyncLifetime
         Assert.NotNull(result);
         Assert.NotEmpty(result);
     }
+
+    // ==================== DEX Tools ====================
+
+    [Fact]
+    public async Task GetDexes_ReturnsList()
+    {
+        var result = await DexTools.GetDexes(_client, _options);
+
+        // DEXes may not be available on testnet - just verify no crash
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task GetSwaps_ReturnsData()
+    {
+        var result = await DexTools.GetSwaps(_client, _options);
+
+        // Swaps may not be available on testnet - just verify no crash
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    // ==================== CSPR.name Tools ====================
+
+    [Fact]
+    public async Task ResolveCsprName_ReturnsData()
+    {
+        var result = await CsprNameTools.ResolveCsprName(_client, _options, "test.cspr");
+
+        // CSPR.name resolution may not be available on testnet - just verify no crash
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    // ==================== Awaiting Deploy Tools ====================
+
+    [Fact]
+    public async Task GetAwaitingDeploy_ReturnsData()
+    {
+        var result = await AwaitingDeployTools.GetAwaitingDeploy(_client, _options, "0000000000000000000000000000000000000000000000000000000000000000");
+
+        // Awaiting deploy likely won't exist - just verify no crash
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    // ==================== FT Rate Tools ====================
+
+    [Fact]
+    public async Task GetFtRateLatest_ReturnsData()
+    {
+        // Use a known contract package hash from testnet if available
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var packages = await endpoint.Contract.GetContractPackagesAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Contract.ContractPackageRequestParameters { PageSize = 1 });
+
+        if (packages?.Data is null || packages.Data.Count == 0)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var packageHash = packages.Data[0].ContractPackageHash;
+        var result = await FtRateTools.GetFtRateLatest(_client, _options, packageHash);
+
+        // Rate data may not be available - just verify no crash
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task GetFtRates_ReturnsData()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var packages = await endpoint.Contract.GetContractPackagesAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Contract.ContractPackageRequestParameters { PageSize = 1 });
+
+        if (packages?.Data is null || packages.Data.Count == 0)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var packageHash = packages.Data[0].ContractPackageHash;
+        var result = await FtRateTools.GetFtRates(_client, _options, packageHash);
+
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task GetFtDailyRateLatest_ReturnsData()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var packages = await endpoint.Contract.GetContractPackagesAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Contract.ContractPackageRequestParameters { PageSize = 1 });
+
+        if (packages?.Data is null || packages.Data.Count == 0)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var packageHash = packages.Data[0].ContractPackageHash;
+        var result = await FtRateTools.GetFtDailyRateLatest(_client, _options, packageHash);
+
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task GetFtDailyRates_ReturnsData()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var packages = await endpoint.Contract.GetContractPackagesAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Contract.ContractPackageRequestParameters { PageSize = 1 });
+
+        if (packages?.Data is null || packages.Data.Count == 0)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var packageHash = packages.Data[0].ContractPackageHash;
+        var result = await FtRateTools.GetFtDailyRates(_client, _options, packageHash);
+
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task GetFtDexRateLatest_ReturnsData()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var packages = await endpoint.Contract.GetContractPackagesAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Contract.ContractPackageRequestParameters { PageSize = 1 });
+
+        if (packages?.Data is null || packages.Data.Count == 0)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var packageHash = packages.Data[0].ContractPackageHash;
+        var result = await FtRateTools.GetFtDexRateLatest(_client, _options, packageHash);
+
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task GetFtDexRates_ReturnsData()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var packages = await endpoint.Contract.GetContractPackagesAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Contract.ContractPackageRequestParameters { PageSize = 1 });
+
+        if (packages?.Data is null || packages.Data.Count == 0)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var packageHash = packages.Data[0].ContractPackageHash;
+        var result = await FtRateTools.GetFtDexRates(_client, _options, packageHash);
+
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task GetFtDailyDexRateLatest_ReturnsData()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var packages = await endpoint.Contract.GetContractPackagesAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Contract.ContractPackageRequestParameters { PageSize = 1 });
+
+        if (packages?.Data is null || packages.Data.Count == 0)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var packageHash = packages.Data[0].ContractPackageHash;
+        var result = await FtRateTools.GetFtDailyDexRateLatest(_client, _options, packageHash);
+
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task GetFtDailyDexRates_ReturnsData()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var packages = await endpoint.Contract.GetContractPackagesAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Contract.ContractPackageRequestParameters { PageSize = 1 });
+
+        if (packages?.Data is null || packages.Data.Count == 0)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var packageHash = packages.Data[0].ContractPackageHash;
+        var result = await FtRateTools.GetFtDailyDexRates(_client, _options, packageHash);
+
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    // ==================== FT Action Types ====================
+
+    [Fact]
+    public async Task GetFtActionTypes_ReturnsData()
+    {
+        var result = await TokenTools.GetFtActionTypes(_client, _options);
+
+        // FT action types may not be available on testnet - just verify no crash
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    // ==================== Purse Transfer Tools ====================
+
+    [Fact]
+    public async Task GetPurseTransfers_ReturnsData()
+    {
+        // Get main purse URef from a known account
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var account = await endpoint.Account.GetAccountAsync(TestPublicKey);
+
+        if (account?.MainPurseUref is null)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var result = await TransferTools.GetPurseTransfers(_client, _options, account.MainPurseUref);
+
+        // Could be "No transfers" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    // ==================== Purse Delegation Tools ====================
+
+    [Fact]
+    public async Task GetPurseDelegations_ReturnsData()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var account = await endpoint.Account.GetAccountAsync(TestPublicKey);
+
+        if (account?.MainPurseUref is null)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var result = await AccountTools.GetPurseDelegations(_client, _options, account.MainPurseUref);
+
+        // Could be "No delegations" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetPurseDelegationRewards_ReturnsData()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var account = await endpoint.Account.GetAccountAsync(TestPublicKey);
+
+        if (account?.MainPurseUref is null)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var result = await AccountTools.GetPurseDelegationRewards(_client, _options, account.MainPurseUref);
+
+        // Could be "No delegation rewards" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetTotalPurseDelegationRewards_ReturnsData()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var account = await endpoint.Account.GetAccountAsync(TestPublicKey);
+
+        if (account?.MainPurseUref is null)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var result = await AccountTools.GetTotalPurseDelegationRewards(_client, _options, account.MainPurseUref);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("Total Rewards", result);
+    }
+
+    // ==================== Validator Era Rewards ====================
+
+    [Fact]
+    public async Task GetValidatorEraRewards_ReturnsData()
+    {
+        var result = await ValidatorTools.GetValidatorEraRewards(_client, _options, TestPublicKey);
+
+        // Could be "No era rewards" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
 }

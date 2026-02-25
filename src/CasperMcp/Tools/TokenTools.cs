@@ -266,4 +266,33 @@ public static class TokenTools
             return $"Error retrieving contract package FT actions: {ex.Message}";
         }
     }
+
+    [McpServerTool, Description("Get the list of fungible token action types on the Casper Network (e.g., transfer, mint, burn).")]
+    public static async Task<string> GetFtActionTypes(
+        CasperCloudRestClient client,
+        CasperMcpOptions options)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var result = await endpoint.FT.GetFTTokenActionTypesAsync();
+
+            if (result?.Data is null || result.Data.Count == 0)
+                return "No FT action types found.";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Fungible Token Action Types");
+
+            foreach (var actionType in result.Data)
+            {
+                sb.AppendLine($"- **ID:** {actionType.Id?.ToString() ?? "N/A"} | **Name:** {actionType.Name ?? "N/A"}");
+            }
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving FT action types: {ex.Message}";
+        }
+    }
 }

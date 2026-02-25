@@ -410,7 +410,7 @@ agent = Agent(
 )
 ```
 
-## Available Tools (60 tools)
+## Available Tools (80 tools)
 
 ### Account Tools
 | Tool | Description |
@@ -424,6 +424,9 @@ agent = Agent(
 | `GetAccountDelegationRewards` | Get delegation rewards for an account |
 | `GetTotalAccountDelegationRewards` | Get total delegation rewards for an account |
 | `GetTotalValidatorDelegatorRewards` | Get total delegation rewards paid out by a validator |
+| `GetPurseDelegations` | Get delegations for a specific purse |
+| `GetPurseDelegationRewards` | Get delegation rewards for a specific purse |
+| `GetTotalPurseDelegationRewards` | Get total delegation rewards for a specific purse |
 
 ### Block Tools
 | Tool | Description |
@@ -451,6 +454,7 @@ agent = Agent(
 | `GetHistoricalValidatorPerformance` | Get historical performance scores for a validator |
 | `GetHistoricalValidatorAveragePerformance` | Get historical average performance for a validator |
 | `GetHistoricalValidatorsAveragePerformance` | Get historical average performance for all validators |
+| `GetValidatorEraRewards` | Get validator rewards aggregated by era |
 
 ### Contract Tools
 | Tool | Description |
@@ -472,6 +476,19 @@ agent = Agent(
 | `GetFungibleTokenActions` | Get fungible token actions (transfers, mints, burns) |
 | `GetAccountFungibleTokenActions` | Get fungible token actions for an account |
 | `GetContractPackageFungibleTokenActions` | Get fungible token actions for a contract package |
+| `GetFtActionTypes` | Get the list of fungible token action types |
+
+### FT Rate Tools
+| Tool | Description |
+|---|---|
+| `GetFtRateLatest` | Get the latest fungible token rate |
+| `GetFtRates` | Get historical fungible token rates |
+| `GetFtDailyRateLatest` | Get the latest daily aggregated FT rate |
+| `GetFtDailyRates` | Get historical daily aggregated FT rates |
+| `GetFtDexRateLatest` | Get the latest token-to-token DEX rate |
+| `GetFtDexRates` | Get historical token-to-token DEX rates |
+| `GetFtDailyDexRateLatest` | Get the latest daily token-to-token DEX rate |
+| `GetFtDailyDexRates` | Get historical daily token-to-token DEX rates |
 
 ### NFT Tools (CEP-47 / CEP-78)
 | Tool | Description |
@@ -493,6 +510,7 @@ agent = Agent(
 |---|---|
 | `GetTransfers` | Get native CSPR transfer history for an account |
 | `GetDeployTransfers` | Get native CSPR transfers for a specific deploy |
+| `GetPurseTransfers` | Get native CSPR transfers for a specific purse |
 
 ### Network Tools
 | Tool | Description |
@@ -519,6 +537,24 @@ agent = Agent(
 |---|---|
 | `GetCentralizedAccountInfo` | Get centralized account information by account hash |
 | `GetCentralizedAccounts` | Get a list of centralized account information entries |
+
+### DEX Tools
+| Tool | Description |
+|---|---|
+| `GetDexes` | Get a list of all decentralized exchanges |
+| `GetSwaps` | Get a paginated list of token swaps |
+
+### CSPR.name Tools
+| Tool | Description |
+|---|---|
+| `ResolveCsprName` | Resolve a CSPR.name to an account hash |
+
+### Awaiting Deploy Tools
+| Tool | Description |
+|---|---|
+| `GetAwaitingDeploy` | Get an awaiting deploy by deploy hash |
+| `CreateAwaitingDeploy` | Create an awaiting deploy for multi-signature collection |
+| `AddAwaitingDeployApproval` | Add an approval (signature) to an awaiting deploy |
 
 ## Development
 
@@ -586,7 +622,7 @@ casper-mcp/
 │   ├── Configuration/     # Options and config
 │   ├── Helpers/           # Formatting (motes → CSPR, etc.)
 │   ├── Middleware/        # HTTP middleware (API key auth)
-│   ├── Tools/             # MCP tool implementations (12 files, 60 tools)
+│   ├── Tools/             # MCP tool implementations (16 files, 80 tools)
 │   └── Program.cs         # Entry point, DI setup, dual transport
 ├── tests/CasperMcp.Tests/ # Unit + integration tests
 ├── mcp.json               # MCP server manifest

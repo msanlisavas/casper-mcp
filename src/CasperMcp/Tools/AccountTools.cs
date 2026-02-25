@@ -351,4 +351,116 @@ public static class AccountTools
             return $"Error retrieving total validator delegator rewards: {ex.Message}";
         }
     }
+
+    [McpServerTool, Description("Get delegations for a specific purse on the Casper Network.")]
+    public static async Task<string> GetPurseDelegations(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("The purse URef")] string purseUref,
+        [Description("Page number (default: 1)")] int page = 1,
+        [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var parameters = new DelegationRequestParameters
+            {
+                PageNumber = page,
+                PageSize = Math.Min(pageSize, 250)
+            };
+
+            var result = await endpoint.Delegate.GetPurseDelegationsAsync(purseUref, parameters);
+
+            if (result?.Data is null || result.Data.Count == 0)
+                return $"No delegations found for purse: {purseUref}";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Purse Delegations (Page {page}, {result.ItemCount} total)");
+
+            foreach (var delegation in result.Data)
+            {
+                sb.AppendLine($"---");
+                sb.AppendLine($"- **Validator:** {FormattingHelpers.FormatHash(delegation.ValidatorPublicKey)}");
+                sb.AppendLine($"- **Staked Amount:** {FormattingHelpers.MotesToCspr(delegation.Stake)}");
+            }
+
+            sb.AppendLine($"---");
+            sb.AppendLine($"Page {page} of {result.PageCount}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving purse delegations: {ex.Message}";
+        }
+    }
+
+    [McpServerTool, Description("Get delegation rewards for a specific purse on the Casper Network.")]
+    public static async Task<string> GetPurseDelegationRewards(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("The purse URef")] string purseUref,
+        [Description("Page number (default: 1)")] int page = 1,
+        [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var parameters = new AccountDelegatorRewardRequestParameters
+            {
+                PageNumber = page,
+                PageSize = Math.Min(pageSize, 250)
+            };
+
+            var result = await endpoint.Delegate.GetPurseDelegationRewardsAsync(purseUref, parameters);
+
+            if (result?.Data is null || result.Data.Count == 0)
+                return $"No delegation rewards found for purse: {purseUref}";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Purse Delegation Rewards (Page {page}, {result.ItemCount} total)");
+
+            foreach (var reward in result.Data)
+            {
+                sb.AppendLine($"---");
+                sb.AppendLine($"- **Era:** {reward.EraId?.ToString() ?? "N/A"}");
+                sb.AppendLine($"  Validator: {FormattingHelpers.FormatHash(reward.ValidatorPublicKey)}");
+                sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(reward.Amount)}");
+                sb.AppendLine($"  Timestamp: {FormattingHelpers.FormatTimestamp(reward.Timestamp)}");
+            }
+
+            sb.AppendLine($"---");
+            sb.AppendLine($"Page {page} of {result.PageCount}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving purse delegation rewards: {ex.Message}";
+        }
+    }
+
+    [McpServerTool, Description("Get the total delegation rewards for a specific purse on the Casper Network.")]
+    public static async Task<string> GetTotalPurseDelegationRewards(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("The purse URef")] string purseUref)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var total = await endpoint.Delegate.GetTotalPurseDelegationRewardsAsync(purseUref);
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Total Purse Delegation Rewards");
+            sb.AppendLine($"- **Purse:** {FormattingHelpers.FormatHash(purseUref)}");
+            sb.AppendLine($"- **Total Rewards:** {FormattingHelpers.MotesToCspr(total)}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving total purse delegation rewards: {ex.Message}";
+        }
+    }
 }

@@ -12,7 +12,7 @@
 
     <!-- Package Metadata -->
     <PackageId>CasperMcp</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Description>MCP (Model Context Protocol) server for the Casper Network blockchain. Query accounts, blocks, deploys, validators, contracts, tokens, NFTs, and more via CSPR.Cloud API. Works with Claude, GPT, Cursor, VS Code Copilot, and any MCP-compatible client.</Description>
     <Authors>msanlisavas</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CSPR.Cloud.Net" Version="1.0.11" />
+    <PackageReference Include="CSPR.Cloud.Net" Version="1.1.0" />
 <PackageReference Include="ModelContextProtocol" Version="1.0.0" />
     <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.0.0" />
   </ItemGroup>
