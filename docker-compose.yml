@@ -1,0 +1,16 @@
+services:
+  casper-mcp:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - CSPR_CLOUD_API_KEY=${CSPR_CLOUD_API_KEY}
+      - CASPER_MCP_SERVER_API_KEY=${CASPER_MCP_SERVER_API_KEY:-}
+    command: ["--transport", "sse", "--port", "3001"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

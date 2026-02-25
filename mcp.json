@@ -1,0 +1,83 @@
+{
+  "name": "casper-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for the Casper Network blockchain via CSPR.Cloud API",
+  "repository": "https://github.com/msanlisavas/casper-mcp",
+  "license": "MIT",
+  "transport": ["stdio", "sse"],
+  "install": {
+    "dotnet": {
+      "command": "dotnet tool install -g CasperMcp",
+      "run": "casper-mcp --api-key ${CSPR_CLOUD_API_KEY}"
+    },
+    "docker": {
+      "command": "docker pull ghcr.io/msanlisavas/casper-mcp:latest",
+      "run": "docker run -i ghcr.io/msanlisavas/casper-mcp:latest --api-key ${CSPR_CLOUD_API_KEY}"
+    },
+    "docker-sse": {
+      "command": "docker pull ghcr.io/msanlisavas/casper-mcp:latest",
+      "run": "docker run -p 3001:3001 ghcr.io/msanlisavas/casper-mcp:latest --api-key ${CSPR_CLOUD_API_KEY} --transport sse --port 3001"
+    },
+    "source": {
+      "command": "git clone https://github.com/msanlisavas/casper-mcp.git && cd casper-mcp && dotnet build",
+      "run": "dotnet run --project src/CasperMcp -- --api-key ${CSPR_CLOUD_API_KEY}"
+    }
+  },
+  "sse": {
+    "url": "http://localhost:3001/sse",
+    "healthEndpoint": "http://localhost:3001/health"
+  },
+  "config": {
+    "required": {
+      "CSPR_CLOUD_API_KEY": {
+        "description": "Your CSPR.Cloud API key. Get one at https://cspr.cloud",
+        "type": "string"
+      }
+    },
+    "optional": {
+      "network": {
+        "description": "Casper network to connect to",
+        "type": "string",
+        "default": "mainnet",
+        "enum": ["mainnet", "testnet"]
+      },
+      "transport": {
+        "description": "Transport mode: stdio (default) or sse (HTTP/SSE for remote access)",
+        "type": "string",
+        "default": "stdio",
+        "enum": ["stdio", "sse"]
+      },
+      "port": {
+        "description": "HTTP port for SSE transport mode",
+        "type": "integer",
+        "default": 3001
+      },
+      "CASPER_MCP_SERVER_API_KEY": {
+        "description": "Optional API key to authenticate MCP clients in SSE mode",
+        "type": "string"
+      }
+    }
+  },
+  "tools": [
+    "GetAccountInfo",
+    "GetAccountBalance",
+    "GetAccountDeploys",
+    "GetAccountDelegations",
+    "GetBlock",
+    "GetLatestBlocks",
+    "GetDeploy",
+    "GetValidators",
+    "GetValidatorInfo",
+    "GetContract",
+    "GetContractEntryPoints",
+    "GetFtTokenInfo",
+    "GetFtTokenHolders",
+    "GetAccountFtBalances",
+    "GetNftCollection",
+    "GetAccountNfts",
+    "GetTransfers",
+    "GetNetworkStatus",
+    "GetEraInfo",
+    "GetSupplyInfo"
+  ]
+}

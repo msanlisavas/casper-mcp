@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CasperMcp/CasperMcp.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CasperMcp.Tests/CasperMcp.Tests.csproj" />
+  </Folder>
+</Solution>

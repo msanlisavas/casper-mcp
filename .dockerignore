@@ -1,0 +1,13 @@
+.git/
+.github/
+.claude/
+.vs/
+.idea/
+bin/
+obj/
+*.user
+*.suo
+.env
+.env.*
+*.nupkg
+docker-compose.yml
