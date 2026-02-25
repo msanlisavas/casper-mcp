@@ -3,6 +3,8 @@ using System.Text;
 using CasperMcp.Configuration;
 using CasperMcp.Helpers;
 using CSPR.Cloud.Net.Clients;
+using CSPR.Cloud.Net.Parameters.Wrapper.Accounts;
+using CSPR.Cloud.Net.Parameters.Wrapper.Contract;
 using CSPR.Cloud.Net.Parameters.Wrapper.Delegate;
 using CSPR.Cloud.Net.Parameters.Wrapper.Deploy;
 using ModelContextProtocol.Server;
@@ -165,6 +167,188 @@ public static class AccountTools
         catch (Exception ex)
         {
             return $"Error retrieving account delegations: {ex.Message}";
+        }
+    }
+
+    [McpServerTool, Description("Get a paginated list of all accounts on the Casper Network.")]
+    public static async Task<string> GetAccounts(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("Page number (default: 1)")] int page = 1,
+        [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var parameters = new AccountsRequestParameters
+            {
+                PageNumber = page,
+                PageSize = Math.Min(pageSize, 250)
+            };
+
+            var result = await endpoint.Account.GetAccountsAsync(parameters);
+
+            if (result?.Data is null || result.Data.Count == 0)
+                return "No accounts found.";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Accounts (Page {page}, {result.ItemCount} total)");
+
+            foreach (var account in result.Data)
+            {
+                sb.AppendLine($"---");
+                sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(account.PublicKey)}");
+                sb.AppendLine($"  Account Hash: {FormattingHelpers.FormatHash(account.AccountHash)}");
+                sb.AppendLine($"  Balance: {FormattingHelpers.MotesToCspr(account.Balance)}");
+            }
+
+            sb.AppendLine($"---");
+            sb.AppendLine($"Page {page} of {result.PageCount}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving accounts: {ex.Message}";
+        }
+    }
+
+    [McpServerTool, Description("Get contract packages deployed by a Casper Network account.")]
+    public static async Task<string> GetAccountContractPackages(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("The public key of the account")] string publicKey,
+        [Description("Page number (default: 1)")] int page = 1,
+        [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var parameters = new AccountContractPackageRequestParameters
+            {
+                PageNumber = page,
+                PageSize = Math.Min(pageSize, 250)
+            };
+
+            var result = await endpoint.Contract.GetAccountContractPackagesAsync(publicKey, parameters);
+
+            if (result?.Data is null || result.Data.Count == 0)
+                return $"No contract packages found for account: {publicKey}";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Account Contract Packages (Page {page}, {result.ItemCount} total)");
+
+            foreach (var pkg in result.Data)
+            {
+                sb.AppendLine($"---");
+                sb.AppendLine($"- **Package Hash:** {FormattingHelpers.FormatHash(pkg.ContractPackageHash)}");
+                sb.AppendLine($"  Name: {pkg.Name ?? "N/A"}");
+                sb.AppendLine($"  Description: {pkg.Description ?? "N/A"}");
+                sb.AppendLine($"  Owner: {FormattingHelpers.FormatHash(pkg.OwnerPublicKey)}");
+                sb.AppendLine($"  Created: {FormattingHelpers.FormatTimestamp(pkg.Timestamp)}");
+            }
+
+            sb.AppendLine($"---");
+            sb.AppendLine($"Page {page} of {result.PageCount}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving account contract packages: {ex.Message}";
+        }
+    }
+
+    [McpServerTool, Description("Get delegation rewards for a Casper Network account.")]
+    public static async Task<string> GetAccountDelegationRewards(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("The public key of the account")] string publicKey,
+        [Description("Page number (default: 1)")] int page = 1,
+        [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var parameters = new AccountDelegatorRewardRequestParameters
+            {
+                PageNumber = page,
+                PageSize = Math.Min(pageSize, 250)
+            };
+
+            var result = await endpoint.Delegate.GetAccountDelegatorRewardsAsync(publicKey, parameters);
+
+            if (result?.Data is null || result.Data.Count == 0)
+                return $"No delegation rewards found for account: {publicKey}";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Account Delegation Rewards (Page {page}, {result.ItemCount} total)");
+
+            foreach (var reward in result.Data)
+            {
+                sb.AppendLine($"---");
+                sb.AppendLine($"- **Era:** {reward.EraId?.ToString() ?? "N/A"}");
+                sb.AppendLine($"  Validator: {FormattingHelpers.FormatHash(reward.ValidatorPublicKey)}");
+                sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(reward.Amount)}");
+                sb.AppendLine($"  Timestamp: {FormattingHelpers.FormatTimestamp(reward.Timestamp)}");
+            }
+
+            sb.AppendLine($"---");
+            sb.AppendLine($"Page {page} of {result.PageCount}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving account delegation rewards: {ex.Message}";
+        }
+    }
+
+    [McpServerTool, Description("Get the total delegation rewards for a Casper Network account.")]
+    public static async Task<string> GetTotalAccountDelegationRewards(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("The public key of the account")] string publicKey)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var total = await endpoint.Delegate.GetTotalAccountDelegationRewards(publicKey);
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Total Account Delegation Rewards");
+            sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(publicKey)}");
+            sb.AppendLine($"- **Total Rewards:** {FormattingHelpers.MotesToCspr(total)}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving total account delegation rewards: {ex.Message}";
+        }
+    }
+
+    [McpServerTool, Description("Get the total delegation rewards paid out by a validator to its delegators.")]
+    public static async Task<string> GetTotalValidatorDelegatorRewards(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("The public key of the validator")] string publicKey)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var total = await endpoint.Delegate.GetTotalValidatorDelegationRewards(publicKey);
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Total Validator Delegator Rewards");
+            sb.AppendLine($"- **Validator Public Key:** {FormattingHelpers.FormatHash(publicKey)}");
+            sb.AppendLine($"- **Total Rewards:** {FormattingHelpers.MotesToCspr(total)}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving total validator delegator rewards: {ex.Message}";
         }
     }
 }

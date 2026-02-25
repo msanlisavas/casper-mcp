@@ -87,4 +87,47 @@ public static class BlockTools
             return $"Error retrieving latest blocks: {ex.Message}";
         }
     }
+
+    [McpServerTool, Description("Get blocks proposed by a specific validator on the Casper Network.")]
+    public static async Task<string> GetValidatorBlocks(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("The public key of the validator")] string publicKey,
+        [Description("Page number (default: 1)")] int page = 1,
+        [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var parameters = new BlockRequestParameters
+            {
+                PageNumber = page,
+                PageSize = Math.Min(pageSize, 250)
+            };
+
+            var result = await endpoint.Block.GetValidatorBlocksAsync(publicKey, parameters);
+
+            if (result?.Data is null || result.Data.Count == 0)
+                return $"No blocks found for validator: {publicKey}";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Validator Blocks (Page {page}, {result.ItemCount} total)");
+
+            foreach (var block in result.Data)
+            {
+                sb.AppendLine($"---");
+                sb.AppendLine($"- **Height:** {block.BlockHeight?.ToString() ?? "N/A"} | **Hash:** {block.BlockHash?[..16]}...");
+                sb.AppendLine($"  Era: {block.EraId} | Transfers: {block.NativeTransfersNumber ?? 0} | Calls: {block.ContractCallsNumber ?? 0} | {FormattingHelpers.FormatTimestamp(block.Timestamp)}");
+            }
+
+            sb.AppendLine($"---");
+            sb.AppendLine($"Page {page} of {result.PageCount}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving validator blocks: {ex.Message}";
+        }
+    }
 }

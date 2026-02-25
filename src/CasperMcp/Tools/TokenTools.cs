@@ -130,4 +130,140 @@ public static class TokenTools
             return $"Error retrieving account FT balances: {ex.Message}";
         }
     }
+
+    [McpServerTool, Description("Get fungible token actions (transfers, mints, burns) on the Casper Network.")]
+    public static async Task<string> GetFungibleTokenActions(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("Page number (default: 1)")] int page = 1,
+        [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var parameters = new FTActionRequestParameters
+            {
+                PageNumber = page,
+                PageSize = Math.Min(pageSize, 250)
+            };
+
+            var result = await endpoint.FT.GetFTActionsAsync(parameters);
+
+            if (result?.Data is null || result.Data.Count == 0)
+                return "No fungible token actions found.";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Fungible Token Actions (Page {page}, {result.ItemCount} total)");
+
+            foreach (var action in result.Data)
+            {
+                sb.AppendLine($"---");
+                sb.AppendLine($"- **Deploy:** {FormattingHelpers.FormatHash(action.DeployHash)}");
+                sb.AppendLine($"  Token: {FormattingHelpers.FormatHash(action.ContractPackageHash)}");
+                sb.AppendLine($"  From: {FormattingHelpers.FormatHash(action.FromPublicKey ?? action.FromHash)}");
+                sb.AppendLine($"  To: {FormattingHelpers.FormatHash(action.ToPublicKey ?? action.ToHash)}");
+                sb.AppendLine($"  Amount: {action.Amount ?? "N/A"} | {FormattingHelpers.FormatTimestamp(action.Timestamp)}");
+            }
+
+            sb.AppendLine($"---");
+            sb.AppendLine($"Page {page} of {result.PageCount}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving fungible token actions: {ex.Message}";
+        }
+    }
+
+    [McpServerTool, Description("Get fungible token actions for a specific account on the Casper Network.")]
+    public static async Task<string> GetAccountFungibleTokenActions(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("The public key or account hash")] string accountIdentifier,
+        [Description("Page number (default: 1)")] int page = 1,
+        [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var parameters = new FTAccountActionRequestParameters
+            {
+                PageNumber = page,
+                PageSize = Math.Min(pageSize, 250)
+            };
+
+            var result = await endpoint.FT.GetAccountFTActionsAsync(accountIdentifier, parameters);
+
+            if (result?.Data is null || result.Data.Count == 0)
+                return $"No fungible token actions found for account: {accountIdentifier}";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Account Fungible Token Actions (Page {page}, {result.ItemCount} total)");
+
+            foreach (var action in result.Data)
+            {
+                sb.AppendLine($"---");
+                sb.AppendLine($"- **Deploy:** {FormattingHelpers.FormatHash(action.DeployHash)}");
+                sb.AppendLine($"  Token: {FormattingHelpers.FormatHash(action.ContractPackageHash)}");
+                sb.AppendLine($"  From: {FormattingHelpers.FormatHash(action.FromPublicKey ?? action.FromHash)}");
+                sb.AppendLine($"  To: {FormattingHelpers.FormatHash(action.ToPublicKey ?? action.ToHash)}");
+                sb.AppendLine($"  Amount: {action.Amount ?? "N/A"} | {FormattingHelpers.FormatTimestamp(action.Timestamp)}");
+            }
+
+            sb.AppendLine($"---");
+            sb.AppendLine($"Page {page} of {result.PageCount}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving account fungible token actions: {ex.Message}";
+        }
+    }
+
+    [McpServerTool, Description("Get fungible token actions for a specific contract package on the Casper Network.")]
+    public static async Task<string> GetContractPackageFungibleTokenActions(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("The contract package hash")] string contractPackageHash,
+        [Description("Page number (default: 1)")] int page = 1,
+        [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var parameters = new FTContractPackageActionRequestParameters
+            {
+                PageNumber = page,
+                PageSize = Math.Min(pageSize, 250)
+            };
+
+            var result = await endpoint.FT.GetContractPackageFTActionsAsync(contractPackageHash, parameters);
+
+            if (result?.Data is null || result.Data.Count == 0)
+                return $"No fungible token actions found for contract package: {contractPackageHash}";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Contract Package FT Actions (Page {page}, {result.ItemCount} total)");
+
+            foreach (var action in result.Data)
+            {
+                sb.AppendLine($"---");
+                sb.AppendLine($"- **Deploy:** {FormattingHelpers.FormatHash(action.DeployHash)}");
+                sb.AppendLine($"  From: {FormattingHelpers.FormatHash(action.FromPublicKey ?? action.FromHash)}");
+                sb.AppendLine($"  To: {FormattingHelpers.FormatHash(action.ToPublicKey ?? action.ToHash)}");
+                sb.AppendLine($"  Amount: {action.Amount ?? "N/A"} | {FormattingHelpers.FormatTimestamp(action.Timestamp)}");
+            }
+
+            sb.AppendLine($"---");
+            sb.AppendLine($"Page {page} of {result.PageCount}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving contract package FT actions: {ex.Message}";
+        }
+    }
 }

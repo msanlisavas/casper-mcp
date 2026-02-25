@@ -50,4 +50,16 @@ public static class FormattingHelpers
     }
 
     public static string FormatBool(bool value) => value ? "Yes" : "No";
+
+    public static string FormatDouble(double? value)
+    {
+        if (value is null) return "N/A";
+        return value.Value.ToString("F4", Inv);
+    }
+
+    public static string FormatDecimal(decimal? value)
+    {
+        if (value is null) return "N/A";
+        return value.Value.ToString("N9", Inv);
+    }
 }

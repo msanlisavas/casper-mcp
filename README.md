@@ -410,7 +410,7 @@ agent = Agent(
 )
 ```
 
-## Available Tools
+## Available Tools (60 tools)
 
 ### Account Tools
 | Tool | Description |
@@ -419,29 +419,49 @@ agent = Agent(
 | `GetAccountBalance` | Get CSPR balance breakdown (liquid, staked, delegated) |
 | `GetAccountDeploys` | Get deploy (transaction) history for an account |
 | `GetAccountDelegations` | Get delegation info — which validators the account delegates to |
+| `GetAccounts` | Get a paginated list of all accounts |
+| `GetAccountContractPackages` | Get contract packages deployed by an account |
+| `GetAccountDelegationRewards` | Get delegation rewards for an account |
+| `GetTotalAccountDelegationRewards` | Get total delegation rewards for an account |
+| `GetTotalValidatorDelegatorRewards` | Get total delegation rewards paid out by a validator |
 
 ### Block Tools
 | Tool | Description |
 |---|---|
 | `GetBlock` | Get block details by hash |
 | `GetLatestBlocks` | Get the most recent blocks |
+| `GetValidatorBlocks` | Get blocks proposed by a specific validator |
 
 ### Deploy Tools
 | Tool | Description |
 |---|---|
 | `GetDeploy` | Get deploy (transaction) details by hash |
+| `GetDeploys` | Get a paginated list of all deploys |
+| `GetBlockDeploys` | Get deploys included in a specific block |
+| `GetDeployExecutionTypes` | Get the list of deploy execution types |
 
 ### Validator Tools
 | Tool | Description |
 |---|---|
 | `GetValidators` | List validators with stake, fee, and performance data |
 | `GetValidatorInfo` | Get detailed info about a specific validator |
+| `GetValidatorDelegations` | Get delegations to a specific validator |
+| `GetValidatorRewards` | Get rewards earned by a validator |
+| `GetValidatorTotalRewards` | Get total rewards earned by a validator |
+| `GetHistoricalValidatorPerformance` | Get historical performance scores for a validator |
+| `GetHistoricalValidatorAveragePerformance` | Get historical average performance for a validator |
+| `GetHistoricalValidatorsAveragePerformance` | Get historical average performance for all validators |
 
 ### Contract Tools
 | Tool | Description |
 |---|---|
 | `GetContract` | Get smart contract info by hash |
 | `GetContractEntryPoints` | Get callable entry points of a contract |
+| `GetContracts` | Get a paginated list of all contracts |
+| `GetContractTypes` | Get the list of contract types |
+| `GetContractEntryPointCosts` | Get cost statistics for a contract entry point |
+| `GetContractPackages` | Get a paginated list of contract packages |
+| `GetContractsByContractPackage` | Get contracts belonging to a contract package |
 
 ### Token Tools (CEP-18)
 | Tool | Description |
@@ -449,17 +469,30 @@ agent = Agent(
 | `GetFtTokenInfo` | Get fungible token contract info |
 | `GetFtTokenHolders` | Get token holder list with balances |
 | `GetAccountFtBalances` | Get all fungible token balances for an account |
+| `GetFungibleTokenActions` | Get fungible token actions (transfers, mints, burns) |
+| `GetAccountFungibleTokenActions` | Get fungible token actions for an account |
+| `GetContractPackageFungibleTokenActions` | Get fungible token actions for a contract package |
 
 ### NFT Tools (CEP-47 / CEP-78)
 | Tool | Description |
 |---|---|
 | `GetNftCollection` | Get NFTs in a collection |
 | `GetAccountNfts` | Get NFTs owned by an account |
+| `GetNft` | Get a specific NFT by contract package hash and token ID |
+| `GetNftStandards` | Get the list of supported NFT standards |
+| `GetNftMetadataStatuses` | Get the list of offchain NFT metadata statuses |
+| `GetNftActionsForToken` | Get actions for a specific NFT token |
+| `GetAccountNftActions` | Get NFT actions for an account |
+| `GetContractPackageNftActions` | Get NFT actions for a contract package |
+| `GetNftActionTypes` | Get the list of NFT action types |
+| `GetContractPackageNftOwnership` | Get NFT ownership distribution for a contract package |
+| `GetAccountNftOwnership` | Get NFT ownership summary for an account |
 
 ### Transfer Tools
 | Tool | Description |
 |---|---|
 | `GetTransfers` | Get native CSPR transfer history for an account |
+| `GetDeployTransfers` | Get native CSPR transfers for a specific deploy |
 
 ### Network Tools
 | Tool | Description |
@@ -467,6 +500,25 @@ agent = Agent(
 | `GetNetworkStatus` | Get network status — active validators, era, total stake |
 | `GetEraInfo` | Get current era information |
 | `GetSupplyInfo` | Get CSPR total and circulating supply |
+
+### Bidder Tools
+| Tool | Description |
+|---|---|
+| `GetBidder` | Get information about a specific bidder |
+| `GetBidders` | Get a list of bidders |
+
+### Currency Tools
+| Tool | Description |
+|---|---|
+| `GetCurrentCurrencyRate` | Get the current CSPR exchange rate for a currency |
+| `GetHistoricalCurrencyRates` | Get historical CSPR exchange rates |
+| `GetCurrencies` | Get the list of supported currencies |
+
+### Centralized Account Tools
+| Tool | Description |
+|---|---|
+| `GetCentralizedAccountInfo` | Get centralized account information by account hash |
+| `GetCentralizedAccounts` | Get a list of centralized account information entries |
 
 ## Development
 
@@ -534,7 +586,7 @@ casper-mcp/
 │   ├── Configuration/     # Options and config
 │   ├── Helpers/           # Formatting (motes → CSPR, etc.)
 │   ├── Middleware/        # HTTP middleware (API key auth)
-│   ├── Tools/             # MCP tool implementations (9 files, 20 tools)
+│   ├── Tools/             # MCP tool implementations (12 files, 60 tools)
 │   └── Program.cs         # Entry point, DI setup, dual transport
 ├── tests/CasperMcp.Tests/ # Unit + integration tests
 ├── mcp.json               # MCP server manifest

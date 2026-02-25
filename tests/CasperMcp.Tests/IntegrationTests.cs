@@ -111,6 +111,15 @@ public class IntegrationTests
                     || result.Contains("Error", StringComparison.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public async Task GetValidatorBlocks_ReturnsBlocks()
+    {
+        var result = await BlockTools.GetValidatorBlocks(_client, _options, TestPublicKey);
+
+        // Could be "No blocks" or actual blocks - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
     // ==================== Validator Tools ====================
 
     [Fact]
@@ -146,6 +155,60 @@ public class IntegrationTests
         Assert.DoesNotContain("Error", result);
         Assert.Contains("Validator Information", result);
         Assert.Contains("Fee", result);
+    }
+
+    [Fact]
+    public async Task GetValidatorDelegations_ReturnsData()
+    {
+        var result = await ValidatorTools.GetValidatorDelegations(_client, _options, TestPublicKey);
+
+        // Could be "No delegations" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetValidatorRewards_ReturnsData()
+    {
+        var result = await ValidatorTools.GetValidatorRewards(_client, _options, TestPublicKey);
+
+        // Could be "No rewards" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetValidatorTotalRewards_ReturnsData()
+    {
+        var result = await ValidatorTools.GetValidatorTotalRewards(_client, _options, TestPublicKey);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("Total Rewards", result);
+    }
+
+    [Fact]
+    public async Task GetHistoricalValidatorPerformance_ReturnsData()
+    {
+        var result = await ValidatorTools.GetHistoricalValidatorPerformance(_client, _options, TestPublicKey);
+
+        // Could be "No performance data" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetHistoricalValidatorAveragePerformance_ReturnsData()
+    {
+        var result = await ValidatorTools.GetHistoricalValidatorAveragePerformance(_client, _options, TestPublicKey);
+
+        // Could be "No average performance data" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetHistoricalValidatorsAveragePerformance_ReturnsData()
+    {
+        var result = await ValidatorTools.GetHistoricalValidatorsAveragePerformance(_client, _options);
+
+        // Could be "No validators average performance data" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
     }
 
     // ==================== Account Tools ====================
@@ -188,6 +251,51 @@ public class IntegrationTests
         Assert.DoesNotContain("Error", result);
     }
 
+    [Fact]
+    public async Task GetAccounts_ReturnsAccountsList()
+    {
+        var result = await AccountTools.GetAccounts(_client, _options);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("Accounts", result);
+    }
+
+    [Fact]
+    public async Task GetAccountContractPackages_ReturnsData()
+    {
+        var result = await AccountTools.GetAccountContractPackages(_client, _options, TestPublicKey);
+
+        // Could be "No contract packages" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetAccountDelegationRewards_ReturnsData()
+    {
+        var result = await AccountTools.GetAccountDelegationRewards(_client, _options, TestPublicKey);
+
+        // Could be "No delegation rewards" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetTotalAccountDelegationRewards_ReturnsData()
+    {
+        var result = await AccountTools.GetTotalAccountDelegationRewards(_client, _options, TestPublicKey);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("Total Rewards", result);
+    }
+
+    [Fact]
+    public async Task GetTotalValidatorDelegatorRewards_ReturnsData()
+    {
+        var result = await AccountTools.GetTotalValidatorDelegatorRewards(_client, _options, TestPublicKey);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("Total Rewards", result);
+    }
+
     // ==================== Deploy Tools ====================
 
     [Fact]
@@ -208,6 +316,41 @@ public class IntegrationTests
         Assert.Contains(deployHash, result);
     }
 
+    [Fact]
+    public async Task GetDeploys_ReturnsList()
+    {
+        var result = await DeployTools.GetDeploys(_client, _options);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("Deploys", result);
+    }
+
+    [Fact]
+    public async Task GetBlockDeploys_ReturnsData()
+    {
+        // First get a block hash
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var blocks = await endpoint.Block.GetBlocksAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Block.BlockRequestParameters { PageSize = 1 });
+
+        Assert.NotNull(blocks?.Data);
+        Assert.NotEmpty(blocks.Data);
+
+        var blockHash = blocks.Data[0].BlockHash;
+        var result = await DeployTools.GetBlockDeploys(_client, _options, blockHash);
+
+        // Could be "No deploys" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetDeployExecutionTypes_ReturnsTypes()
+    {
+        var result = await DeployTools.GetDeployExecutionTypes(_client, _options);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("Execution Types", result);
+    }
+
     // ==================== Transfer Tools ====================
 
     [Fact]
@@ -216,6 +359,23 @@ public class IntegrationTests
         var result = await TransferTools.GetTransfers(_client, _options, TestPublicKey);
 
         // Could be "No transfers" or actual transfers - both are valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetDeployTransfers_ReturnsData()
+    {
+        // First get a deploy hash
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var deploys = await endpoint.Deploy.GetDeploysAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Deploy.DeploysRequestParameters { PageSize = 1 });
+
+        Assert.NotNull(deploys?.Data);
+        Assert.NotEmpty(deploys.Data);
+
+        var deployHash = deploys.Data[0].DeployHash;
+        var result = await TransferTools.GetDeployTransfers(_client, _options, deployHash);
+
+        // Could be "No transfers" or actual data - both valid
         Assert.DoesNotContain("Error", result);
     }
 
@@ -261,6 +421,81 @@ public class IntegrationTests
         Assert.DoesNotContain("Error", result);
     }
 
+    [Fact]
+    public async Task GetContracts_ReturnsList()
+    {
+        var result = await ContractTools.GetContracts(_client, _options);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("Contracts", result);
+    }
+
+    [Fact]
+    public async Task GetContractTypes_ReturnsTypes()
+    {
+        var result = await ContractTools.GetContractTypes(_client, _options);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("Contract Types", result);
+    }
+
+    [Fact]
+    public async Task GetContractEntryPointCosts_ReturnsData()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var contracts = await endpoint.Contract.GetContractsAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Contract.ContractsRequestParameters { PageSize = 1 });
+
+        if (contracts?.Data is null || contracts.Data.Count == 0)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var contractHash = contracts.Data[0].ContractHash;
+
+        // Get an entry point name
+        var entryPoints = await endpoint.Contract.GetContractEntryPointsAsync(contractHash);
+        if (entryPoints?.Data is null || entryPoints.Data.Count == 0)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var entryPointName = entryPoints.Data[0].Name;
+        var result = await ContractTools.GetContractEntryPointCosts(_client, _options, contractHash, entryPointName);
+
+        // Could be "No cost data" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetContractPackages_ReturnsList()
+    {
+        var result = await ContractTools.GetContractPackages(_client, _options);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("Contract Packages", result);
+    }
+
+    [Fact]
+    public async Task GetContractsByContractPackage_ReturnsData()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var packages = await endpoint.Contract.GetContractPackagesAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Contract.ContractPackageRequestParameters { PageSize = 1 });
+
+        if (packages?.Data is null || packages.Data.Count == 0)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var packageHash = packages.Data[0].ContractPackageHash;
+        var result = await ContractTools.GetContractsByContractPackage(_client, _options, packageHash);
+
+        // Could be "No contracts" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
     // ==================== Token Tools ====================
 
     [Fact]
@@ -292,6 +527,43 @@ public class IntegrationTests
         Assert.Contains("Token Information", result);
     }
 
+    [Fact]
+    public async Task GetFungibleTokenActions_ReturnsData()
+    {
+        var result = await TokenTools.GetFungibleTokenActions(_client, _options);
+
+        // Could be "No fungible token actions" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetAccountFungibleTokenActions_ReturnsData()
+    {
+        var result = await TokenTools.GetAccountFungibleTokenActions(_client, _options, TestPublicKey);
+
+        // Could be "No fungible token actions" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetContractPackageFungibleTokenActions_ReturnsData()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var packages = await endpoint.Contract.GetContractPackagesAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Contract.ContractPackageRequestParameters { PageSize = 1 });
+
+        if (packages?.Data is null || packages.Data.Count == 0)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var packageHash = packages.Data[0].ContractPackageHash;
+        var result = await TokenTools.GetContractPackageFungibleTokenActions(_client, _options, packageHash);
+
+        // Could be "No fungible token actions" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
     // ==================== NFT Tools ====================
 
     [Fact]
@@ -301,5 +573,135 @@ public class IntegrationTests
 
         // Could be "No NFTs" or actual NFTs - both valid
         Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetNftStandards_ReturnsData()
+    {
+        var result = await NftTools.GetNftStandards(_client, _options);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("NFT Standards", result);
+    }
+
+    [Fact]
+    public async Task GetNftMetadataStatuses_ReturnsData()
+    {
+        var result = await NftTools.GetNftMetadataStatuses(_client, _options);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("NFT Metadata Statuses", result);
+    }
+
+    [Fact]
+    public async Task GetNftActionTypes_ReturnsData()
+    {
+        var result = await NftTools.GetNftActionTypes(_client, _options);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("NFT Action Types", result);
+    }
+
+    [Fact]
+    public async Task GetAccountNftActions_ReturnsData()
+    {
+        var result = await NftTools.GetAccountNftActions(_client, _options, TestPublicKey);
+
+        // Could be "No NFT actions" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    [Fact]
+    public async Task GetAccountNftOwnership_ReturnsData()
+    {
+        var result = await NftTools.GetAccountNftOwnership(_client, _options, TestPublicKey);
+
+        // Could be "No NFT ownership data" or actual data - both valid
+        Assert.DoesNotContain("Error", result);
+    }
+
+    // ==================== Bidder Tools ====================
+
+    [Fact]
+    public async Task GetBidders_ReturnsList()
+    {
+        var result = await BidderTools.GetBidders(_client, _options);
+
+        // Bidder endpoint may not be available on testnet - just verify no crash
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task GetBidder_WithValidKey_ReturnsData()
+    {
+        var result = await BidderTools.GetBidder(_client, _options, TestPublicKey);
+
+        // Could be "Bidder not found" or actual data or API error on testnet - all valid
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    // ==================== Currency Tools ====================
+
+    [Fact]
+    public async Task GetCurrencies_ReturnsList()
+    {
+        var result = await CurrencyTools.GetCurrencies(_client, _options);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("Currencies", result);
+    }
+
+    [Fact]
+    public async Task GetCurrentCurrencyRate_ReturnsData()
+    {
+        var result = await CurrencyTools.GetCurrentCurrencyRate(_client, _options, "1");
+
+        // Could fail on testnet - just verify no crash
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task GetHistoricalCurrencyRates_ReturnsData()
+    {
+        var result = await CurrencyTools.GetHistoricalCurrencyRates(_client, _options, "1");
+
+        // Could fail on testnet - just verify no crash
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    // ==================== Centralized Account Tools ====================
+
+    [Fact]
+    public async Task GetCentralizedAccounts_ReturnsList()
+    {
+        var result = await CentralizedAccountTools.GetCentralizedAccounts(_client, _options);
+
+        // Centralized accounts may not be available on testnet - just verify no crash
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task GetCentralizedAccountInfo_ReturnsData()
+    {
+        // First try to get an account hash
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var account = await endpoint.Account.GetAccountAsync(TestPublicKey);
+
+        if (account?.AccountHash is null)
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var result = await CentralizedAccountTools.GetCentralizedAccountInfo(_client, _options, account.AccountHash);
+
+        // Centralized account info may not be available on testnet - just verify no crash
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
     }
 }
