@@ -27,8 +27,9 @@ jobs:
     - name: Build
       run: dotnet build --no-restore --configuration Release
 
-    - name: Test
-      run: dotnet test --no-build --configuration Release --verbosity normal
+    # Tests skipped in the publish path: integration tests share a public CSPR.Cloud
+    # testnet key and get rate-limited from GitHub Actions runner IPs. Run them
+    # locally or via the build.yml workflow with a per-run API key. See README.
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
