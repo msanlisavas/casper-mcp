@@ -410,7 +410,7 @@ agent = Agent(
 )
 ```
 
-## Available Tools (80 tools)
+## Available Tools (92 tools)
 
 ### Account Tools
 | Tool | Description |
@@ -427,6 +427,7 @@ agent = Agent(
 | `GetPurseDelegations` | Get delegations for a specific purse |
 | `GetPurseDelegationRewards` | Get delegation rewards for a specific purse |
 | `GetTotalPurseDelegationRewards` | Get total delegation rewards for a specific purse |
+| `GetAccountUndelegations` | Get pending undelegations (released 7 eras after creation) |
 
 ### Block Tools
 | Tool | Description |
@@ -493,6 +494,7 @@ agent = Agent(
 ### NFT Tools (CEP-47 / CEP-78)
 | Tool | Description |
 |---|---|
+| `GetNetworkNfts` | Paginated network-wide list of NFTs (filters: package, owner, block range) |
 | `GetNftCollection` | Get NFTs in a collection |
 | `GetAccountNfts` | Get NFTs owned by an account |
 | `GetNft` | Get a specific NFT by contract package hash and token ID |
@@ -556,6 +558,23 @@ agent = Agent(
 | `CreateAwaitingDeploy` | Create an awaiting deploy for multi-signature collection |
 | `AddAwaitingDeployApproval` | Add an approval (signature) to an awaiting deploy |
 
+### Streaming Tools (Snapshot)
+
+Each `Watch*` tool subscribes to a CSPR.Cloud Streaming WebSocket and returns once `maxEvents` (1-50) messages have been captured or `timeoutSeconds` (1-120) has elapsed — whichever comes first. Filters are comma-separated lists.
+
+| Tool | Description |
+|---|---|
+| `WatchBlocks` | Snapshot of newly proposed blocks (filter: proposerPublicKey) |
+| `WatchDeploys` | Snapshot of newly executed deploys (filters: callerPublicKey, contractPackageHash, contractHash, contractEntrypointId, deployHash) |
+| `WatchTransfers` | Snapshot of native CSPR transfers (filters: accountHash, publicKey) |
+| `WatchAccountBalances` | Snapshot of account balance updates (filters: accountHash, publicKey) |
+| `WatchContracts` | Snapshot of newly created contracts (filters: contractPackageHash, deployHash) |
+| `WatchContractPackages` | Snapshot of contract-package created/updated events (filters: contractPackageHash, ownerPublicKey) |
+| `WatchContractEvents` | Snapshot of custom contract-emitted events (**requires** contractHash or contractPackageHash) |
+| `WatchFtTokenActions` | Snapshot of fungible-token actions (filters: contractPackageHash, ownerHash) |
+| `WatchNfts` | Snapshot of NFT created/updated events (filters: contractPackageHash, ownerHash) |
+| `WatchNftActions` | Snapshot of NFT mint/transfer/burn actions (filters: contractPackageHash, ownerHash) |
+
 ## Development
 
 ### Prerequisites
@@ -600,12 +619,12 @@ Docker images are published to `ghcr.io/msanlisavas/casper-mcp` with these tags:
 | Event | Tags |
 |---|---|
 | Push to `main` | `:latest`, `:sha-abc1234` |
-| Tag `v1.2.0` | `:1.2.0`, `:1.2`, `:latest`, `:sha-abc1234` |
+| Tag `v2.9.0` | `:2.9.0`, `:2.9`, `:latest`, `:sha-abc1234` |
 
 To release a new version:
 ```bash
-git tag v1.2.0
-git push origin v1.2.0
+git tag v2.9.0
+git push origin v2.9.0
 ```
 
 ### Debug with MCP Inspector
@@ -622,7 +641,7 @@ casper-mcp/
 │   ├── Configuration/     # Options and config
 │   ├── Helpers/           # Formatting (motes → CSPR, etc.)
 │   ├── Middleware/        # HTTP middleware (API key auth)
-│   ├── Tools/             # MCP tool implementations (16 files, 80 tools)
+│   ├── Tools/             # MCP tool implementations (17 files, 92 tools)
 │   └── Program.cs         # Entry point, DI setup, dual transport
 ├── tests/CasperMcp.Tests/ # Unit + integration tests
 ├── mcp.json               # MCP server manifest

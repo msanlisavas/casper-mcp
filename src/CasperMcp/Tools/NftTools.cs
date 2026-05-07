@@ -57,6 +57,62 @@ public static class NftTools
         }
     }
 
+    [McpServerTool, Description("Get a paginated network-wide list of NFTs on the Casper Network. Optional filters: contract package hash, owner hash, block-height range.")]
+    public static async Task<string> GetNetworkNfts(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("Optional contract package hash to filter NFTs to a single collection")] string? contractPackageHash = null,
+        [Description("Optional owner account/contract hash to filter NFTs by owner")] string? ownerHash = null,
+        [Description("Optional minimum block height filter")] string? fromBlockHeight = null,
+        [Description("Optional maximum block height filter")] string? toBlockHeight = null,
+        [Description("Page number (default: 1)")] int page = 1,
+        [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var parameters = new NFTsRequestParameters
+            {
+                PageNumber = page,
+                PageSize = Math.Min(pageSize, 250)
+            };
+            if (!string.IsNullOrEmpty(contractPackageHash))
+                parameters.FilterParameters.ContractPackageHash = contractPackageHash;
+            if (!string.IsNullOrEmpty(ownerHash))
+                parameters.FilterParameters.OwnerHash = ownerHash;
+            if (!string.IsNullOrEmpty(fromBlockHeight))
+                parameters.FilterParameters.FromBlockHeight = fromBlockHeight;
+            if (!string.IsNullOrEmpty(toBlockHeight))
+                parameters.FilterParameters.ToBlockHeight = toBlockHeight;
+
+            var result = await endpoint.NFT.GetNFTsAsync(parameters);
+
+            if (result?.Data is null || result.Data.Count == 0)
+                return "No NFTs found matching the given filters.";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## NFTs (Page {page}, {result.ItemCount} total)");
+
+            foreach (var nft in result.Data)
+            {
+                sb.AppendLine($"---");
+                sb.AppendLine($"- **Token ID:** {nft.TokenId ?? "N/A"} | Collection: {FormattingHelpers.FormatHash(nft.ContractPackageHash)}");
+                sb.AppendLine($"  Owner: {FormattingHelpers.FormatHash(nft.OwnerPublicKey ?? nft.OwnerHash)}");
+                sb.AppendLine($"  Burned: {FormattingHelpers.FormatBool(nft.IsBurned)} | Block Height: {nft.BlockHeight}");
+                sb.AppendLine($"  Created: {FormattingHelpers.FormatTimestamp(nft.Timestamp)}");
+            }
+
+            sb.AppendLine($"---");
+            sb.AppendLine($"Page {page} of {result.PageCount}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving NFTs: {ex.Message}";
+        }
+    }
+
     [McpServerTool, Description("Get NFTs owned by a Casper Network account.")]
     public static async Task<string> GetAccountNfts(
         CasperCloudRestClient client,

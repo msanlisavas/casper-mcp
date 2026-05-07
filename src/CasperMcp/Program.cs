@@ -50,6 +50,7 @@ if (string.IsNullOrEmpty(options.ApiKey))
 
 var casperConfig = new CasperCloudClientConfig(options.ApiKey);
 var casperClient = new CasperCloudRestClient(casperConfig);
+var casperSocketClient = new CasperCloudSocketClient(casperConfig);
 
 if (options.IsSseTransport)
 {
@@ -61,6 +62,7 @@ if (options.IsSseTransport)
     builder.Logging.SetMinimumLevel(LogLevel.Information);
 
     builder.Services.AddSingleton(casperClient);
+    builder.Services.AddSingleton(casperSocketClient);
     builder.Services.AddSingleton(options);
 
     builder.Services
@@ -106,6 +108,7 @@ else
     builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
     builder.Services.AddSingleton(casperClient);
+    builder.Services.AddSingleton(casperSocketClient);
     builder.Services.AddSingleton(options);
 
     builder.Services

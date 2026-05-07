@@ -32,9 +32,19 @@ public static class DeployTools
             sb.AppendLine($"- **Block Hash:** {FormattingHelpers.FormatHash(deploy.BlockHash)}");
             sb.AppendLine($"- **Block Height:** {deploy.BlockHeight?.ToString() ?? "N/A"}");
             sb.AppendLine($"- **Caller:** {FormattingHelpers.FormatHash(deploy.CallerPublicKey)}");
+            if (!string.IsNullOrEmpty(deploy.CallerHash))
+                sb.AppendLine($"- **Caller Hash:** {FormattingHelpers.FormatHash(deploy.CallerHash)}");
+            if (!string.IsNullOrEmpty(deploy.CallerCsprName))
+                sb.AppendLine($"- **Caller CSPR.name:** {deploy.CallerCsprName}");
             sb.AppendLine($"- **Status:** {deploy.Status ?? "N/A"}");
             sb.AppendLine($"- **Cost:** {FormattingHelpers.MotesToCspr(deploy.Cost)}");
             sb.AppendLine($"- **Payment Amount:** {FormattingHelpers.MotesToCspr(deploy.PaymentAmount)}");
+            if (!string.IsNullOrEmpty(deploy.ConsumedGas))
+                sb.AppendLine($"- **Consumed Gas:** {FormattingHelpers.MotesToCspr(deploy.ConsumedGas)}");
+            if (!string.IsNullOrEmpty(deploy.RefundAmount))
+                sb.AppendLine($"- **Refund Amount:** {FormattingHelpers.MotesToCspr(deploy.RefundAmount)}");
+            if (deploy.VersionId is not null)
+                sb.AppendLine($"- **Casper 2.0 Version:** {(deploy.VersionId == 2 ? "Transaction" : "Deploy")} (id={deploy.VersionId})");
             sb.AppendLine($"- **Timestamp:** {FormattingHelpers.FormatTimestamp(deploy.Timestamp)}");
 
             if (!string.IsNullOrEmpty(deploy.ContractHash))

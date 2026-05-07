@@ -1,6 +1,6 @@
 {
   "name": "casper-mcp",
-  "version": "1.2.0",
+  "version": "2.9.0",
   "description": "MCP server for the Casper Network blockchain via CSPR.Cloud API",
   "repository": "https://github.com/msanlisavas/casper-mcp",
   "license": "MIT",
@@ -138,6 +138,18 @@
     "GetPurseDelegations",
     "GetPurseDelegationRewards",
     "GetTotalPurseDelegationRewards",
-    "GetValidatorEraRewards"
+    "GetValidatorEraRewards",
+    "WatchBlocks",
+    "WatchDeploys",
+    "WatchTransfers",
+    "WatchAccountBalances",
+    "WatchContracts",
+    "WatchContractPackages",
+    "WatchContractEvents",
+    "WatchFtTokenActions",
+    "WatchNfts",
+    "WatchNftActions",
+    "GetAccountUndelegations",
+    "GetNetworkNfts"
   ]
 }

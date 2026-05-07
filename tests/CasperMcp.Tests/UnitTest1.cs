@@ -71,7 +71,7 @@ public class FormattingHelpersTests
     [Fact]
     public void FormatPercentage_Null_ReturnsNA()
     {
-        var result = FormattingHelpers.FormatPercentage(null);
+        var result = FormattingHelpers.FormatPercentage((float?)null);
         Assert.Equal("N/A", result);
     }
 

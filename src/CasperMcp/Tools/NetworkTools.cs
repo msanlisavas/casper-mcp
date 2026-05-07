@@ -87,7 +87,15 @@ public static class NetworkTools
             sb.AppendLine($"- **Token:** {supply.Token ?? "CSPR"}");
             sb.AppendLine($"- **Total Supply:** {FormattingHelpers.MotesToCspr(supply.Total)}");
             sb.AppendLine($"- **Circulating Supply:** {FormattingHelpers.MotesToCspr(supply.Circulating)}");
-            sb.AppendLine($"- **Last Updated:** {FormattingHelpers.FormatTimestamp(supply.Timestamp)}");
+
+            if (supply.TotalAnnualIssuance is not null)
+                sb.AppendLine($"- **Total Annual Issuance:** {supply.TotalAnnualIssuance.Value:P4}");
+            if (supply.AnnualStakingRewardsIssuance is not null)
+                sb.AppendLine($"- **Annual Staking Rewards Issuance:** {supply.AnnualStakingRewardsIssuance.Value:P4}");
+            if (supply.AnnualEcosystemSustainIssuance is not null)
+                sb.AppendLine($"- **Annual Ecosystem Sustain Issuance:** {supply.AnnualEcosystemSustainIssuance.Value:P4}");
+
+            sb.AppendLine($"- **Last Updated:** {FormattingHelpers.FormatUnixSeconds(supply.Timestamp)}");
 
             return sb.ToString();
         }

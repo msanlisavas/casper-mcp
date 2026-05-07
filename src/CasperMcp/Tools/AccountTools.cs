@@ -36,8 +36,11 @@ public static class AccountTools
             sb.AppendLine($"- **Staked Balance:** {FormattingHelpers.MotesToCspr(account.StakedBalance)}");
             sb.AppendLine($"- **Delegated Balance:** {FormattingHelpers.MotesToCspr(account.DelegatedBalance)}");
             sb.AppendLine($"- **Undelegated Balance:** {FormattingHelpers.MotesToCspr(account.UndelegatedBalance)}");
+            sb.AppendLine($"- **Undelegating Balance:** {FormattingHelpers.MotesToCspr(account.UndelegatingBalance)}");
             sb.AppendLine($"- **Auction Status:** {account.AuctionStatus ?? "N/A"}");
             sb.AppendLine($"- **Main Purse:** {FormattingHelpers.FormatHash(account.MainPurseUref)}");
+            if (!string.IsNullOrEmpty(account.CsprName))
+                sb.AppendLine($"- **CSPR.name:** {account.CsprName}");
 
             return sb.ToString();
         }
@@ -68,7 +71,7 @@ public static class AccountTools
             sb.AppendLine($"- **Staked Balance:** {FormattingHelpers.MotesToCspr(account.StakedBalance)}");
             sb.AppendLine($"- **Delegated Balance:** {FormattingHelpers.MotesToCspr(account.DelegatedBalance)}");
 
-            var totalBalance = (account.Balance ?? 0) + (account.StakedBalance ?? 0) + (account.DelegatedBalance ?? 0);
+            var totalBalance = FormattingHelpers.SumMotes(account.Balance, account.StakedBalance, account.DelegatedBalance);
             sb.AppendLine($"- **Total (liquid + staked + delegated):** {FormattingHelpers.MotesToCspr(totalBalance)}");
 
             return sb.ToString();
@@ -349,6 +352,53 @@ public static class AccountTools
         catch (Exception ex)
         {
             return $"Error retrieving total validator delegator rewards: {ex.Message}";
+        }
+    }
+
+    [McpServerTool, Description("Get pending undelegations for a Casper Network account. Funds are released 7 eras after the era of creation.")]
+    public static async Task<string> GetAccountUndelegations(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("The public key of the account")] string publicKey,
+        [Description("Page number (default: 1)")] int page = 1,
+        [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
+    {
+        try
+        {
+            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+            var parameters = new DelegationRequestParameters
+            {
+                PageNumber = page,
+                PageSize = Math.Min(pageSize, 250)
+            };
+
+            var result = await endpoint.Delegate.GetAccountUndelegationsAsync(publicKey, parameters);
+
+            if (result?.Data is null || result.Data.Count == 0)
+                return $"No pending undelegations found for account: {publicKey}";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Account Undelegations (Page {page}, {result.ItemCount} total)");
+
+            foreach (var u in result.Data)
+            {
+                sb.AppendLine($"---");
+                sb.AppendLine($"- **Validator:** {FormattingHelpers.FormatHash(u.ValidatorPublicKey)}");
+                sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(u.Amount)}");
+                sb.AppendLine($"  Era of Creation: {u.EraOfCreation?.ToString() ?? "N/A"} (released 7 eras later)");
+                sb.AppendLine($"  Delegator Type: {(u.DelegatorIdentifierTypeId == 1 ? "Purse" : "Account")}");
+                sb.AppendLine($"  Bonding Purse: {FormattingHelpers.FormatHash(u.BondingPurse)}");
+                sb.AppendLine($"  Initiated: {FormattingHelpers.FormatTimestamp(u.Timestamp)}");
+            }
+
+            sb.AppendLine($"---");
+            sb.AppendLine($"Page {page} of {result.PageCount}");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving account undelegations: {ex.Message}";
         }
     }
 

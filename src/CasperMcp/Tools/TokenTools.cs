@@ -32,6 +32,10 @@ public static class TokenTools
             sb.AppendLine($"- **Name:** {pkg.Name ?? "N/A"}");
             sb.AppendLine($"- **Description:** {pkg.Description ?? "N/A"}");
             sb.AppendLine($"- **Owner:** {FormattingHelpers.FormatHash(pkg.OwnerPublicKey)}");
+            if (!string.IsNullOrEmpty(pkg.IconUrl))
+                sb.AppendLine($"- **Icon URL:** {pkg.IconUrl}");
+            if (!string.IsNullOrEmpty(pkg.WebsiteUrl))
+                sb.AppendLine($"- **Website URL:** {pkg.WebsiteUrl}");
             sb.AppendLine($"- **Deploys:** {pkg.DeploysNumber?.ToString() ?? "N/A"}");
             sb.AppendLine($"- **Created:** {FormattingHelpers.FormatTimestamp(pkg.Timestamp)}");
 
