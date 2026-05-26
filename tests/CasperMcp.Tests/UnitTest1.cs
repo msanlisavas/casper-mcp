@@ -148,45 +148,38 @@ public class CasperMcpOptionsTests
     }
 
     [Fact]
-    public void DefaultApiKey_IsEmpty()
+    public void DefaultNetwork_IsMainnet()
     {
         var options = new CasperMcpOptions();
-        Assert.Equal(string.Empty, options.ApiKey);
+        Assert.Equal("mainnet", options.Network);
+    }
+}
+
+public class ServerConfigTests
+{
+    [Fact]
+    public void Defaults_AreSane()
+    {
+        var cfg = new ServerConfig();
+        Assert.Equal("stdio", cfg.Transport);
+        Assert.False(cfg.IsHttp);
+        Assert.Equal(3001, cfg.Port);
+        Assert.Equal("/mcp", cfg.McpPath);
+        Assert.Equal("mainnet", cfg.DefaultNetwork);
+        Assert.Equal(AuthMode.None, cfg.AuthMode);
     }
 
     [Fact]
-    public void DefaultTransport_IsStdio()
+    public void IsHttp_WhenTransportHttp_ReturnsTrue()
     {
-        var options = new CasperMcpOptions();
-        Assert.Equal("stdio", options.Transport);
-        Assert.False(options.IsSseTransport);
+        var cfg = new ServerConfig { Transport = "http" };
+        Assert.True(cfg.IsHttp);
     }
 
     [Fact]
-    public void IsSseTransport_SseValue_ReturnsTrue()
+    public void IsHttp_CaseInsensitive()
     {
-        var options = new CasperMcpOptions { Transport = "sse" };
-        Assert.True(options.IsSseTransport);
-    }
-
-    [Fact]
-    public void IsSseTransport_CaseInsensitive()
-    {
-        var options = new CasperMcpOptions { Transport = "SSE" };
-        Assert.True(options.IsSseTransport);
-    }
-
-    [Fact]
-    public void DefaultPort_Is3001()
-    {
-        var options = new CasperMcpOptions();
-        Assert.Equal(3001, options.Port);
-    }
-
-    [Fact]
-    public void DefaultServerApiKey_IsEmpty()
-    {
-        var options = new CasperMcpOptions();
-        Assert.Equal(string.Empty, options.ServerApiKey);
+        var cfg = new ServerConfig { Transport = "HTTP" };
+        Assert.True(cfg.IsHttp);
     }
 }
