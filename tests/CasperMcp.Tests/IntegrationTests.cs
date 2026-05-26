@@ -125,14 +125,13 @@ public class IntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task GetBlock_WithInvalidHash_ReturnsError()
+    public async Task GetBlock_WithInvalidHash_Throws()
     {
-        var result = await BlockTools.GetBlock(_client, _options, "invalid_hash_000");
-
-        // Should return an error message (either our "not found" or API error)
-        Assert.True(result.Contains("not found", StringComparison.OrdinalIgnoreCase)
-                    || result.Contains("Error", StringComparison.OrdinalIgnoreCase)
-                    || result.Contains("failed", StringComparison.OrdinalIgnoreCase));
+        // A malformed hash is a client error (HTTP 400). Tools no longer swallow exceptions —
+        // the SDK's typed exception propagates to the central ToolInvocationFilter, which maps it
+        // to a safe agent-facing message. Calling the tool directly (no filter) surfaces the throw.
+        await Assert.ThrowsAsync<CSPR.Cloud.Net.Errors.InvalidParamException>(
+            () => BlockTools.GetBlock(_client, _options, "invalid_hash_000"));
     }
 
     [Fact]
@@ -766,13 +765,13 @@ public class IntegrationTests : IAsyncLifetime
     // ==================== Awaiting Deploy Tools ====================
 
     [Fact]
-    public async Task GetAwaitingDeploy_ReturnsData()
+    public async Task GetAwaitingDeploy_AccessRestricted_Throws()
     {
-        var result = await AwaitingDeployTools.GetAwaitingDeploy(_client, _options, "0000000000000000000000000000000000000000000000000000000000000000");
-
-        // Awaiting deploy likely won't exist - just verify no crash
-        Assert.NotNull(result);
-        Assert.NotEmpty(result);
+        // The awaiting-deploy endpoint is access-restricted (HTTP 403) for this key. With the
+        // central error filter owning error handling, the SDK's typed exception now propagates
+        // instead of being swallowed into a string.
+        await Assert.ThrowsAsync<CSPR.Cloud.Net.Errors.AccessDeniedException>(
+            () => AwaitingDeployTools.GetAwaitingDeploy(_client, _options, new string('0', 64)));
     }
 
     // ==================== FT Rate Tools ====================
