@@ -73,7 +73,7 @@ public static class BlockTools
             foreach (var block in result.Data)
             {
                 sb.AppendLine($"---");
-                sb.AppendLine($"- **Height:** {block.BlockHeight?.ToString() ?? "N/A"} | **Hash:** {block.BlockHash?[..16]}...");
+                sb.AppendLine($"- **Height:** {block.BlockHeight?.ToString() ?? "N/A"} | **Hash:** {FormattingHelpers.FormatHash(block.BlockHash)}");
                 sb.AppendLine($"  Era: {block.EraId} | Transfers: {block.NativeTransfersNumber ?? 0} | Calls: {block.ContractCallsNumber ?? 0} | {FormattingHelpers.FormatTimestamp(block.Timestamp)}");
             }
 
@@ -116,7 +116,7 @@ public static class BlockTools
             foreach (var block in result.Data)
             {
                 sb.AppendLine($"---");
-                sb.AppendLine($"- **Height:** {block.BlockHeight?.ToString() ?? "N/A"} | **Hash:** {block.BlockHash?[..16]}...");
+                sb.AppendLine($"- **Height:** {block.BlockHeight?.ToString() ?? "N/A"} | **Hash:** {FormattingHelpers.FormatHash(block.BlockHash)}");
                 sb.AppendLine($"  Era: {block.EraId} | Transfers: {block.NativeTransfersNumber ?? 0} | Calls: {block.ContractCallsNumber ?? 0} | {FormattingHelpers.FormatTimestamp(block.Timestamp)}");
             }
 
