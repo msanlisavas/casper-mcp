@@ -1,0 +1,49 @@
+using System.Net;
+using CasperMcp.Remote;
+using Microsoft.AspNetCore.Http;
+
+namespace CasperMcp.Middleware;
+
+/// <summary>
+/// For remote (http) mode: requires the per-agent CSPR key header and validates the optional
+/// network header, before any tool dispatch. Health/readiness probes bypass validation.
+/// </summary>
+public class RemoteRequestMiddleware
+{
+    private readonly RequestDelegate _next;
+
+    public RemoteRequestMiddleware(RequestDelegate next) => _next = next;
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        var path = context.Request.Path;
+        if (path.StartsWithSegments("/health") || path.StartsWithSegments("/ready"))
+        {
+            await _next(context);
+            return;
+        }
+
+        if (!RemoteHeaders.TryGetCsprKey(context.Request.Headers, out _))
+        {
+            await WriteError(context, HttpStatusCode.Unauthorized,
+                $"Missing required {RemoteHeaders.CsprKeyHeader} header.");
+            return;
+        }
+
+        if (!RemoteHeaders.TryResolveNetwork(context.Request.Headers, "mainnet", out _))
+        {
+            await WriteError(context, HttpStatusCode.BadRequest,
+                $"Invalid {RemoteHeaders.NetworkHeader}; expected 'mainnet' or 'testnet'.");
+            return;
+        }
+
+        await _next(context);
+    }
+
+    private static async Task WriteError(HttpContext context, HttpStatusCode status, string message)
+    {
+        context.Response.StatusCode = (int)status;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync($"{{\"error\":\"{message}\"}}");
+    }
+}
