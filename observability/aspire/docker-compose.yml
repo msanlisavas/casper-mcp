@@ -1,0 +1,35 @@
+# Aspire option — the .NET Aspire Dashboard as the observability viewer.
+#
+# A single container that receives OTLP and shows traces, metrics, and structured logs in a clean
+# .NET UI with NO query language to learn. Great for live/dev viewing. (It stores data in-memory,
+# so use the Grafana option — or a hosted backend — when you need long-term retention.)
+#
+#   docker compose -f observability/aspire/docker-compose.yml up --build
+#   open http://localhost:18888   (Aspire Dashboard, anonymous access)
+#
+# Tear down:  docker compose -f observability/aspire/docker-compose.yml down
+
+services:
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    ports:
+      - "18888:18888"   # Dashboard UI -> http://localhost:18888
+      - "18889:18889"   # OTLP gRPC (casper-mcp ships telemetry here)
+    environment:
+      # Local convenience: no login token required. Remove for shared/production deployments.
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+    restart: unless-stopped
+
+  casper-mcp:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    depends_on:
+      - aspire-dashboard
+    ports:
+      - "3001:3001"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
+      - CASPER_MCP_AUTH_MODE=${CASPER_MCP_AUTH_MODE:-none}
+    command: ["--transport", "http", "--port", "3001"]
+    restart: unless-stopped

@@ -1,0 +1,11 @@
+apiVersion: 1
+
+# Auto-loads the Casper MCP dashboard into otel-lgtm's bundled Grafana on startup.
+providers:
+  - name: "Casper MCP"
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/casper-dashboards/casper-mcp.json
+      foldersFromFilesStructure: false

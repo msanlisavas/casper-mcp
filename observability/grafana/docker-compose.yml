@@ -1,0 +1,36 @@
+# Grafana option — full local observability stack for casper-mcp.
+#
+# Runs the MCP server next to grafana/otel-lgtm (Grafana + Tempo + Prometheus + Loki +
+# OpenTelemetry Collector in one container). The server exports traces, metrics, AND logs to it
+# over OTLP. A ready-made dashboard is auto-provisioned — no query-writing needed.
+#
+#   docker compose -f observability/grafana/docker-compose.yml up --build
+#   open http://localhost:3000/d/casper-mcp   (Grafana, anonymous access)
+#
+# Tear down:  docker compose -f observability/grafana/docker-compose.yml down
+
+services:
+  lgtm:
+    image: grafana/otel-lgtm:latest
+    ports:
+      - "3000:3000"   # Grafana UI  ->  http://localhost:3000/d/casper-mcp
+      - "4317:4317"   # OTLP gRPC (casper-mcp ships telemetry here)
+      - "4318:4318"   # OTLP HTTP
+    volumes:
+      - ./provisioning/casper-mcp.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/casper-mcp.yaml:ro
+      - ./dashboards/casper-mcp.json:/etc/casper-dashboards/casper-mcp.json:ro
+    restart: unless-stopped
+
+  casper-mcp:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    depends_on:
+      - lgtm
+    ports:
+      - "3001:3001"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:4317
+      - CASPER_MCP_AUTH_MODE=${CASPER_MCP_AUTH_MODE:-none}
+    command: ["--transport", "http", "--port", "3001"]
+    restart: unless-stopped
