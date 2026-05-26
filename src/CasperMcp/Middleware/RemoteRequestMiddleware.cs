@@ -17,7 +17,10 @@ public class RemoteRequestMiddleware
     public async Task InvokeAsync(HttpContext context)
     {
         var path = context.Request.Path;
-        if (path.StartsWithSegments("/health") || path.StartsWithSegments("/ready"))
+        // Probes and unauthenticated OAuth discovery must bypass the per-agent key requirement.
+        if (path.StartsWithSegments("/health")
+            || path.StartsWithSegments("/ready")
+            || path.StartsWithSegments("/.well-known"))
         {
             await _next(context);
             return;

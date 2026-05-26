@@ -96,4 +96,13 @@ public class UpstreamErrorMapperTests
         Assert.True(msg.Contains("duplicate", StringComparison.OrdinalIgnoreCase)
                     || msg.Contains("conflict", StringComparison.OrdinalIgnoreCase));
     }
+
+    [Fact]
+    public void Describe_RateLimitException_MentionsRateLimit()
+    {
+        // The SDK throws RateLimitException on HTTP 429 (not HttpRequestException), so the mapper
+        // must handle the real type, not just the status-code fallback.
+        var ex = new RateLimitException("Rate Limit Error: slow down", null);
+        Assert.Contains("rate limit", UpstreamErrorMapper.Describe(ex), StringComparison.OrdinalIgnoreCase);
+    }
 }

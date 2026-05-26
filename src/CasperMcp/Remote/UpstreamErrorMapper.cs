@@ -31,6 +31,8 @@ public static class UpstreamErrorMapper
                 return $"CSPR.Cloud rejected the request parameters: {Detail(ex.Message)}";
             case DuplicateEntryException:
                 return "CSPR.Cloud reported a duplicate or conflicting entry.";
+            case RateLimitException:
+                return "Rate limited by CSPR.Cloud. Slow down and retry shortly.";
             case InternalServerErrorException:
                 return "CSPR.Cloud is temporarily unavailable (server error). Try again later.";
 

@@ -1,5 +1,6 @@
 using CasperMcp.Configuration;
 using CasperMcp.Middleware;
+using CasperMcp.Observability;
 using CasperMcp.Remote;
 using CSPR.Cloud.Net.Clients;
 using CSPR.Cloud.Net.Objects.Config;
@@ -65,11 +66,15 @@ if (config.IsHttp)
     builder.Logging.AddJsonConsole();
     builder.Logging.SetMinimumLevel(LogLevel.Information);
 
+    // Opt-in OpenTelemetry (traces + metrics) — enabled when OTEL_EXPORTER_OTLP_ENDPOINT is set.
+    var telemetryEnabled = builder.AddCasperTelemetry();
+
     builder.Services.AddSingleton(config);
     builder.Services.AddHttpContextAccessor();
 
-    // Shared, pooled connection handler for all tenants.
-    builder.Services.AddHttpClient("cspr")
+    // Shared, pooled connection handler for all tenants. 30s request timeout so a hung upstream
+    // never holds a request long enough to trip WAF/proxy idle limits.
+    builder.Services.AddHttpClient("cspr", c => c.Timeout = TimeSpan.FromSeconds(30))
         .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
         {
             PooledConnectionLifetime = TimeSpan.FromMinutes(2)
@@ -81,8 +86,9 @@ if (config.IsHttp)
         var http = sp.GetRequiredService<IHttpContextAccessor>().HttpContext!;
         RemoteHeaders.TryGetCsprKey(http.Request.Headers, out var key); // presence enforced by middleware
         var factory = sp.GetRequiredService<IHttpClientFactory>();
-        var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-        return CasperClientFactory.Create(key, factory.CreateClient("cspr"), loggerFactory);
+        // Do NOT pass the app logger into the SDK: its exception constructors log the raw upstream
+        // response body, which would bypass our redaction. Errors are surfaced via ToolInvocationFilter.
+        return CasperClientFactory.Create(key, factory.CreateClient("cspr"), loggerFactory: null);
     });
 
     // Per-request tool-facing options with network resolved from the request.
@@ -108,7 +114,7 @@ if (config.IsHttp)
         .AddMcpServer()
         .WithHttpTransport(o => o.Stateless = true)
         .WithToolsFromAssembly();
-    ToolErrorFilter.Add(mcpBuilder);
+    ToolInvocationFilter.Add(mcpBuilder);
 
     builder.Configuration["urls"] = $"http://0.0.0.0:{config.Port}";
 
@@ -144,7 +150,7 @@ if (config.IsHttp)
                 $"{ctx.Request.Scheme}://{ctx.Request.Host}{config.McpPath}", config.JwtAuthority)));
     }
 
-    Console.WriteLine($"Casper MCP (http) on http://0.0.0.0:{config.Port}{config.McpPath} | auth={config.AuthMode} | default-network={config.DefaultNetwork}");
+    Console.WriteLine($"Casper MCP (http) on http://0.0.0.0:{config.Port}{config.McpPath} | auth={config.AuthMode} | default-network={config.DefaultNetwork} | telemetry={(telemetryEnabled ? "otlp" : "off")}");
     await app.RunAsync();
     return 0;
 }
@@ -170,3 +176,6 @@ hostBuilder.Services.AddMcpServer().WithStdioServerTransport().WithToolsFromAsse
 
 await hostBuilder.Build().RunAsync();
 return 0;
+
+// Exposed so the test project can host the app via WebApplicationFactory<Program>.
+public partial class Program { }
