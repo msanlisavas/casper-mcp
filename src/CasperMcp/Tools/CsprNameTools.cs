@@ -36,7 +36,7 @@ public static class CsprNameTools
         }
         catch (Exception ex)
         {
-            return $"Error resolving CSPR.name: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

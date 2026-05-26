@@ -36,7 +36,7 @@ public static class CurrencyTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving currency rate: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -78,7 +78,7 @@ public static class CurrencyTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving historical currency rates: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -118,7 +118,7 @@ public static class CurrencyTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving currencies: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

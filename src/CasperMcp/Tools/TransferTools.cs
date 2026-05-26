@@ -53,7 +53,7 @@ public static class TransferTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving transfers: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -99,7 +99,7 @@ public static class TransferTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving deploy transfers: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -145,7 +145,7 @@ public static class TransferTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving purse transfers: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

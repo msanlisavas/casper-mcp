@@ -46,7 +46,7 @@ public static class AccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving account info: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -78,7 +78,7 @@ public static class AccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving account balance: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -126,7 +126,7 @@ public static class AccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving account deploys: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -169,7 +169,7 @@ public static class AccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving account delegations: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -212,7 +212,7 @@ public static class AccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving accounts: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -258,7 +258,7 @@ public static class AccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving account contract packages: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -303,7 +303,7 @@ public static class AccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving account delegation rewards: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -327,7 +327,7 @@ public static class AccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving total account delegation rewards: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -351,7 +351,7 @@ public static class AccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving total validator delegator rewards: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -398,7 +398,7 @@ public static class AccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving account undelegations: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -441,7 +441,7 @@ public static class AccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving purse delegations: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -486,7 +486,7 @@ public static class AccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving purse delegation rewards: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -510,7 +510,7 @@ public static class AccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving total purse delegation rewards: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

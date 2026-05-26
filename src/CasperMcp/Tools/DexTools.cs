@@ -36,7 +36,7 @@ public static class DexTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving DEXes: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -83,7 +83,7 @@ public static class DexTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving swaps: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

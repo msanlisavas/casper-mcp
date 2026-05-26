@@ -53,7 +53,7 @@ public static class NftTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving NFT collection: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -109,7 +109,7 @@ public static class NftTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving NFTs: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -156,7 +156,7 @@ public static class NftTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving account NFTs: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -190,7 +190,7 @@ public static class NftTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving NFT: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -219,7 +219,7 @@ public static class NftTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving NFT standards: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -248,7 +248,7 @@ public static class NftTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving NFT metadata statuses: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -295,7 +295,7 @@ public static class NftTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving NFT token actions: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -341,7 +341,7 @@ public static class NftTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving account NFT actions: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -387,7 +387,7 @@ public static class NftTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving contract package NFT actions: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -416,7 +416,7 @@ public static class NftTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving NFT action types: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -459,7 +459,7 @@ public static class NftTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving NFT ownership: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -504,7 +504,7 @@ public static class NftTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving account NFT ownership: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

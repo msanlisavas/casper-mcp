@@ -131,7 +131,8 @@ public class IntegrationTests : IAsyncLifetime
 
         // Should return an error message (either our "not found" or API error)
         Assert.True(result.Contains("not found", StringComparison.OrdinalIgnoreCase)
-                    || result.Contains("Error", StringComparison.OrdinalIgnoreCase));
+                    || result.Contains("Error", StringComparison.OrdinalIgnoreCase)
+                    || result.Contains("failed", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

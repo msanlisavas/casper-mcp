@@ -43,7 +43,7 @@ public static class TokenTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving token info: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -86,7 +86,7 @@ public static class TokenTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving token holders: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -131,7 +131,7 @@ public static class TokenTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving account FT balances: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -176,7 +176,7 @@ public static class TokenTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving fungible token actions: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -222,7 +222,7 @@ public static class TokenTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving account fungible token actions: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -267,7 +267,7 @@ public static class TokenTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving contract package FT actions: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -296,7 +296,7 @@ public static class TokenTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving FT action types: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

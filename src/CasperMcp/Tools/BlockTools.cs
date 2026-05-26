@@ -42,7 +42,7 @@ public static class BlockTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving block: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -84,7 +84,7 @@ public static class BlockTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving latest blocks: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -127,7 +127,7 @@ public static class BlockTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving validator blocks: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

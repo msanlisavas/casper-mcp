@@ -38,7 +38,7 @@ public static class AwaitingDeployTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving awaiting deploy: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -65,7 +65,7 @@ public static class AwaitingDeployTools
         }
         catch (Exception ex)
         {
-            return $"Error creating awaiting deploy: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -95,7 +95,7 @@ public static class AwaitingDeployTools
         }
         catch (Exception ex)
         {
-            return $"Error adding approval to awaiting deploy: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

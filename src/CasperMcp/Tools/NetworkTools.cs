@@ -36,7 +36,7 @@ public static class NetworkTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving network status: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -64,7 +64,7 @@ public static class NetworkTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving era info: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -101,7 +101,7 @@ public static class NetworkTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving supply info: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

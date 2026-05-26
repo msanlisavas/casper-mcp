@@ -63,7 +63,7 @@ public static class ValidatorTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving validators: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -109,7 +109,7 @@ public static class ValidatorTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving validator info: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -152,7 +152,7 @@ public static class ValidatorTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving validator delegations: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -196,7 +196,7 @@ public static class ValidatorTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving validator rewards: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -220,7 +220,7 @@ public static class ValidatorTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving validator total rewards: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -261,7 +261,7 @@ public static class ValidatorTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving validator performance: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -302,7 +302,7 @@ public static class ValidatorTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving validator average performance: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -342,7 +342,7 @@ public static class ValidatorTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving validators average performance: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -386,7 +386,7 @@ public static class ValidatorTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving validator era rewards: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

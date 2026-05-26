@@ -36,7 +36,7 @@ public static class CentralizedAccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving centralized account info: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -79,7 +79,7 @@ public static class CentralizedAccountTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving centralized accounts: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

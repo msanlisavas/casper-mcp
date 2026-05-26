@@ -49,7 +49,7 @@ public static class ContractTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving contract: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -81,7 +81,7 @@ public static class ContractTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving contract entry points: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -125,7 +125,7 @@ public static class ContractTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving contracts: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -154,7 +154,7 @@ public static class ContractTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving contract types: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -191,7 +191,7 @@ public static class ContractTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving entry point costs: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -234,7 +234,7 @@ public static class ContractTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving contract packages: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -279,7 +279,7 @@ public static class ContractTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving contracts by package: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

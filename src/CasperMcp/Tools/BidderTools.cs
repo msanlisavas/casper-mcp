@@ -41,7 +41,7 @@ public static class BidderTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving bidder: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -85,7 +85,7 @@ public static class BidderTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving bidders: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

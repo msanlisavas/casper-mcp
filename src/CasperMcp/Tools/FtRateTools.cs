@@ -45,7 +45,7 @@ public static class FtRateTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving FT rate: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -89,7 +89,7 @@ public static class FtRateTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving FT rates: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -124,7 +124,7 @@ public static class FtRateTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving daily FT rate: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -167,7 +167,7 @@ public static class FtRateTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving daily FT rates: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -204,7 +204,7 @@ public static class FtRateTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving FT DEX rate: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -249,7 +249,7 @@ public static class FtRateTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving FT DEX rates: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -285,7 +285,7 @@ public static class FtRateTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving daily FT DEX rate: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -330,7 +330,7 @@ public static class FtRateTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving daily FT DEX rates: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }

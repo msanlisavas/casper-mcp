@@ -70,7 +70,7 @@ public static class DeployTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving deploy: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -114,7 +114,7 @@ public static class DeployTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving deploys: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -160,7 +160,7 @@ public static class DeployTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving block deploys: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 
@@ -189,7 +189,7 @@ public static class DeployTools
         }
         catch (Exception ex)
         {
-            return $"Error retrieving deploy execution types: {ex.Message}";
+            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
         }
     }
 }
