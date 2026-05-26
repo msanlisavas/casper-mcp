@@ -1,9 +1,15 @@
 using CasperMcp.Configuration;
+using CasperMcp.Middleware;
+using CasperMcp.Remote;
 using CSPR.Cloud.Net.Clients;
 using CSPR.Cloud.Net.Objects.Config;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Net.Http;
 
 var config = new ServerConfig();
 
@@ -42,27 +48,114 @@ static AuthMode ParseAuthMode(string value) => value.ToLowerInvariant() switch
 
 if (config.IsHttp)
 {
-    Console.Error.WriteLine("http transport not wired yet"); // replaced in Task 11
-    return 1;
+    var builder = WebApplication.CreateBuilder(args);
+
+    builder.Logging.ClearProviders();
+    builder.Logging.AddJsonConsole();
+    builder.Logging.SetMinimumLevel(LogLevel.Information);
+
+    builder.Services.AddSingleton(config);
+    builder.Services.AddHttpContextAccessor();
+
+    // Shared, pooled connection handler for all tenants.
+    builder.Services.AddHttpClient("cspr")
+        .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+        });
+
+    // Per-request, per-agent REST client built from the request's CSPR key.
+    builder.Services.AddScoped(sp =>
+    {
+        var http = sp.GetRequiredService<IHttpContextAccessor>().HttpContext!;
+        RemoteHeaders.TryGetCsprKey(http.Request.Headers, out var key); // presence enforced by middleware
+        var factory = sp.GetRequiredService<IHttpClientFactory>();
+        var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+        return CasperClientFactory.Create(key, factory.CreateClient("cspr"), loggerFactory);
+    });
+
+    // Per-request tool-facing options with network resolved from the request.
+    builder.Services.AddScoped(sp =>
+    {
+        var http = sp.GetRequiredService<IHttpContextAccessor>().HttpContext!;
+        RemoteHeaders.TryResolveNetwork(http.Request.Headers, config.DefaultNetwork, out var network);
+        return new CasperMcpOptions { Network = network };
+    });
+
+    if (config.AuthMode == AuthMode.Jwt)
+    {
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.Authority = config.JwtAuthority;
+                options.Audience = config.JwtAudience;
+            });
+        builder.Services.AddAuthorization();
+    }
+
+    var mcpBuilder = builder.Services
+        .AddMcpServer()
+        .WithHttpTransport(o => o.Stateless = true)
+        .WithToolsFromAssembly();
+    ToolErrorFilter.Add(mcpBuilder);
+
+    builder.Configuration["urls"] = $"http://0.0.0.0:{config.Port}";
+
+    var app = builder.Build();
+
+    // Auth (mode-dependent) runs first.
+    if (config.AuthMode == AuthMode.ApiKey)
+        app.UseMiddleware<ApiKeyAuthMiddleware>(config.AuthApiKey);
+    if (config.AuthMode == AuthMode.Jwt)
+    {
+        app.UseAuthentication();
+        app.UseAuthorization();
+    }
+
+    // Then enforce the per-agent CSPR key + network validity.
+    app.UseMiddleware<RemoteRequestMiddleware>();
+
+    var mcp = app.MapMcp(config.McpPath);
+    if (config.AuthMode == AuthMode.Jwt)
+        mcp.RequireAuthorization();
+
+    app.MapGet("/health", () => Results.Ok(new { status = "healthy", server = "casper-mcp", transport = "http" }));
+    app.MapGet("/ready", () =>
+    {
+        var ready = config.AuthMode != AuthMode.Jwt || !string.IsNullOrEmpty(config.JwtAuthority);
+        return ready ? Results.Ok(new { status = "ready" }) : Results.StatusCode(503);
+    });
+
+    if (config.AuthMode == AuthMode.Jwt)
+    {
+        app.MapGet("/.well-known/oauth-protected-resource", (HttpContext ctx) =>
+            Results.Ok(ProtectedResourceMetadata.Build(
+                $"{ctx.Request.Scheme}://{ctx.Request.Host}{config.McpPath}", config.JwtAuthority)));
+    }
+
+    Console.WriteLine($"Casper MCP (http) on http://0.0.0.0:{config.Port}{config.McpPath} | auth={config.AuthMode} | default-network={config.DefaultNetwork}");
+    await app.RunAsync();
+    return 0;
 }
 
+// ---- stdio profile ----
 if (string.IsNullOrEmpty(config.StdioApiKey))
 {
     Console.Error.WriteLine("Error: API key is required in stdio mode. Provide via --api-key or CSPR_CLOUD_API_KEY.");
     return 1;
 }
 
-var casperConfig = new CasperCloudClientConfig(config.StdioApiKey);
-var casperClient = new CasperCloudRestClient(casperConfig);
+var stdioConfig = new CasperCloudClientConfig(config.StdioApiKey);
+var stdioClient = new CasperCloudRestClient(stdioConfig);
 
-var builder = Host.CreateApplicationBuilder(args);
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole(opts => opts.LogToStandardErrorThreshold = LogLevel.Trace);
-builder.Logging.SetMinimumLevel(LogLevel.Warning);
+var hostBuilder = Host.CreateApplicationBuilder(args);
+hostBuilder.Logging.ClearProviders();
+hostBuilder.Logging.AddConsole(opts => opts.LogToStandardErrorThreshold = LogLevel.Trace);
+hostBuilder.Logging.SetMinimumLevel(LogLevel.Warning);
 
-builder.Services.AddSingleton(casperClient);
-builder.Services.AddSingleton(new CasperMcpOptions { Network = config.DefaultNetwork });
-builder.Services.AddMcpServer().WithStdioServerTransport().WithToolsFromAssembly();
+hostBuilder.Services.AddSingleton(stdioClient);
+hostBuilder.Services.AddSingleton(new CasperMcpOptions { Network = config.DefaultNetwork });
+hostBuilder.Services.AddMcpServer().WithStdioServerTransport().WithToolsFromAssembly();
 
-await builder.Build().RunAsync();
+await hostBuilder.Build().RunAsync();
 return 0;
