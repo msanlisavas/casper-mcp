@@ -47,10 +47,10 @@ dotnet run --project src/CasperMcp -- --api-key YOUR_API_KEY
 | Argument | Environment Variable | Description |
 |---|---|---|
 | `--api-key` | `CSPR_CLOUD_API_KEY` | CSPR.Cloud API key (**required in stdio mode**). Get one at [cspr.cloud](https://cspr.cloud) |
-| `--network` | — | `mainnet` (default) or `testnet` |
-| `--transport` | — | `stdio` (default) or `http` (Streamable HTTP for remote/multi-tenant access) |
-| `--port` | — | HTTP port for http mode (default: `3001`) |
-| `--mcp-path` | — | URL path for the MCP endpoint in http mode (default: `/mcp`) |
+| `--network` | `CASPER_MCP_NETWORK` | `mainnet` (default) or `testnet` |
+| `--transport` | `CASPER_MCP_TRANSPORT` | `stdio` (default) or `http` (Streamable HTTP for remote/multi-tenant access) |
+| `--port` | `CASPER_MCP_PORT` | HTTP port for http mode (default: `3001`) |
+| `--mcp-path` | `CASPER_MCP_PATH` | URL path for the MCP endpoint in http mode (default: `/mcp`) |
 | `--auth-mode` | `CASPER_MCP_AUTH_MODE` | Auth mode for http transport: `none` (default), `apikey`, or `jwt` |
 | `--auth-api-key` | `CASPER_MCP_AUTH_API_KEY` | Shared secret for `apikey` auth mode |
 | `--auth-jwt-authority` | `CASPER_MCP_AUTH_JWT_AUTHORITY` | JWT authority URL for `jwt` auth mode |
@@ -363,6 +363,28 @@ curl -X POST http://localhost:3001/mcp \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
+
+### Observability
+
+The server is instrumented so you can watch traffic and health in your own stack.
+
+**OpenTelemetry (traces + metrics).** Set the standard `OTEL_EXPORTER_OTLP_ENDPOINT` env var and the server exports to your OTLP collector (Grafana/Tempo/Jaeger, Prometheus via the OTel Collector, Datadog, etc.). When the var is unset, telemetry is off and the server runs normally.
+
+```bash
+docker run -p 3001:3001 \
+  -e CASPER_MCP_TRANSPORT=http \
+  -e OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317 \
+  ghcr.io/msanlisavas/casper-mcp:latest
+```
+
+What's emitted:
+- **Traces:** an ASP.NET Core server span per request, an outbound HttpClient span per CSPR.Cloud call, and a `tool/<name>` span per MCP tool call (tagged `mcp.tool` and `casper.tenant`).
+- **Metrics:** `casper_mcp.tool.calls` (counter) and `casper_mcp.tool.duration` (histogram, ms), both tagged by `tool` and `status` (`ok` / `error` / `cancelled`), plus standard ASP.NET Core, HttpClient, and .NET runtime metrics (request rate, latency, in-flight, GC, etc.).
+- **Structured logs (JSON to stdout):** one line per tool call — `tool`, `status`, `duration_ms`, `tenant`, `correlation_id` — so you can grep/ship logs even without OTLP.
+
+**Per-agent correlation without exposing keys.** Logs, spans, and metrics tag traffic with a `tenant` value that is a **non-reversible fingerprint** of the agent's CSPR.Cloud key (`k_` + a short SHA-256 prefix, e.g. `k_3f9a1c2b4d5e`). You can see per-agent request volume, latency, and error rates and correlate a tenant's activity across logs/traces — **the raw key is never logged, traced, or returned in errors.** (`anonymous` is used when no key is present.)
+
+**Health probes:** `GET /health` (liveness) and `GET /ready` (readiness) — both unauthenticated, for your load balancer / k8s.
 
 ### HTTP Client Configs
 

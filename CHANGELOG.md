@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Readiness endpoint**: `GET /ready` (joins `/health` as an unauthenticated probe).
 - Pooled HTTP connections via `IHttpClientFactory` with central typed error mapping.
 - `--mcp-path` flag to customize the MCP endpoint path (default `/mcp`).
+- **Observability**: opt-in OpenTelemetry (traces + metrics) enabled by setting `OTEL_EXPORTER_OTLP_ENDPOINT`. Captures ASP.NET Core, outbound HttpClient, .NET runtime, and custom `casper-mcp` tool instrumentation — `casper_mcp.tool.calls` (counter) and `casper_mcp.tool.duration` (histogram), tagged by `tool` and `status`. Plus structured JSON logs (one line per tool call: `tool`, `status`, `duration_ms`, `tenant`, `correlation_id`). Traffic is tagged with a **non-reversible fingerprint** of the CSPR.Cloud key, so per-agent activity is correlatable across logs/metrics/traces without exposing the key.
+- **Environment-variable configuration**: `CASPER_MCP_TRANSPORT`, `CASPER_MCP_PORT`, `CASPER_MCP_NETWORK`, `CASPER_MCP_PATH` (container-friendly; CLI args still override).
 
 ### Removed (BREAKING)
 
@@ -39,6 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **FT rate tools** (`get_ft_rates`, `get_ft_daily_rates`, and the `*_rate_latest` variants) now send the required `currency_id` (default USD) — previously failed with `400 Empty currency_id`.
 - **FT DEX rate tools** (`get_ft_dex_rate_latest`, `get_ft_dex_rates`, `get_ft_daily_dex_rate_latest`, `get_ft_daily_dex_rates`) now take a required `targetContractPackageHash` (the API mandates a target token) — previously failed with `400`.
 - **Block list views** (`get_latest_blocks`, `get_validator_blocks`) now emit the full block hash so an agent can chain it into `get_block` / `get_block_deploys` — previously truncated to 16 characters.
+- **Tools no longer swallow exceptions** — a central `ToolInvocationFilter` owns error handling: failures return an MCP `IsError` result, are logged once with a correlation id, and `OperationCanceledException` propagates so a client/WAF disconnect cancels in-flight work.
+- **429 Too Many Requests** is now surfaced as a clear "rate limited, retry shortly" message instead of a generic error.
+- **OAuth discovery** (`GET /.well-known/oauth-protected-resource`) is no longer rejected by the per-agent-key requirement in `jwt` mode.
+- **Upstream timeout**: the CSPR.Cloud HTTP client now has a 30s timeout so a hung upstream cannot hold a request past typical WAF/proxy idle limits.
+- **Log redaction**: the SDK client is no longer handed the app logger (its exception text can include raw upstream bodies); only the redacted tenant fingerprint is ever logged.
 
 ## [2.9.0] - 2026-05-07
 
