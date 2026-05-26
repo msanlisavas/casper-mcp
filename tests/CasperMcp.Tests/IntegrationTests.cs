@@ -868,7 +868,7 @@ public class IntegrationTests : IAsyncLifetime
         }
 
         var packageHash = packages.Data[0].ContractPackageHash;
-        var result = await FtRateTools.GetFtDexRateLatest(_client, _options, packageHash);
+        var result = await FtRateTools.GetFtDexRateLatest(_client, _options, packageHash, packageHash);
 
         Assert.NotNull(result);
         Assert.NotEmpty(result);
@@ -887,7 +887,7 @@ public class IntegrationTests : IAsyncLifetime
         }
 
         var packageHash = packages.Data[0].ContractPackageHash;
-        var result = await FtRateTools.GetFtDexRates(_client, _options, packageHash);
+        var result = await FtRateTools.GetFtDexRates(_client, _options, packageHash, packageHash);
 
         Assert.NotNull(result);
         Assert.NotEmpty(result);
@@ -906,7 +906,7 @@ public class IntegrationTests : IAsyncLifetime
         }
 
         var packageHash = packages.Data[0].ContractPackageHash;
-        var result = await FtRateTools.GetFtDailyDexRateLatest(_client, _options, packageHash);
+        var result = await FtRateTools.GetFtDailyDexRateLatest(_client, _options, packageHash, packageHash);
 
         Assert.NotNull(result);
         Assert.NotEmpty(result);
@@ -925,7 +925,7 @@ public class IntegrationTests : IAsyncLifetime
         }
 
         var packageHash = packages.Data[0].ContractPackageHash;
-        var result = await FtRateTools.GetFtDailyDexRates(_client, _options, packageHash);
+        var result = await FtRateTools.GetFtDailyDexRates(_client, _options, packageHash, packageHash);
 
         Assert.NotNull(result);
         Assert.NotEmpty(result);
