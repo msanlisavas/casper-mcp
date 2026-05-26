@@ -48,6 +48,17 @@ static AuthMode ParseAuthMode(string value) => value.ToLowerInvariant() switch
 
 if (config.IsHttp)
 {
+    if (config.AuthMode == AuthMode.ApiKey && string.IsNullOrEmpty(config.AuthApiKey))
+    {
+        Console.Error.WriteLine("Error: --auth-api-key (or CASPER_MCP_AUTH_API_KEY) is required when --auth-mode=apikey.");
+        return 1;
+    }
+    if (config.AuthMode == AuthMode.Jwt && string.IsNullOrEmpty(config.JwtAuthority))
+    {
+        Console.Error.WriteLine("Error: --auth-jwt-authority (or CASPER_MCP_AUTH_JWT_AUTHORITY) is required when --auth-mode=jwt.");
+        return 1;
+    }
+
     var builder = WebApplication.CreateBuilder(args);
 
     builder.Logging.ClearProviders();

@@ -30,6 +30,8 @@ public class RemoteRequestMiddleware
             return;
         }
 
+        // Fallback value is irrelevant here: this call only validates the header when present.
+        // The effective per-request network is resolved from ServerConfig.DefaultNetwork in Program.cs.
         if (!RemoteHeaders.TryResolveNetwork(context.Request.Headers, "mainnet", out _))
         {
             await WriteError(context, HttpStatusCode.BadRequest,

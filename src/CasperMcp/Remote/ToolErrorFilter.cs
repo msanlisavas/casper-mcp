@@ -30,7 +30,12 @@ public static class ToolErrorFilter
                 {
                     var logger = context.Services?.GetService<ILoggerFactory>()?.CreateLogger("ToolCall");
                     var correlationId = Guid.NewGuid().ToString("n");
-                    logger?.LogError(ex, "Tool call failed. CorrelationId={CorrelationId}", correlationId);
+                    // Log a sanitized summary by default; full exception only at Debug to avoid
+                    // any chance of upstream messages carrying secret material into aggregated logs.
+                    logger?.LogError(
+                        "Tool call failed. CorrelationId={CorrelationId} ExceptionType={ExceptionType}",
+                        correlationId, ex.GetType().FullName);
+                    logger?.LogDebug(ex, "Tool call exception detail. CorrelationId={CorrelationId}", correlationId);
 
                     return new CallToolResult
                     {

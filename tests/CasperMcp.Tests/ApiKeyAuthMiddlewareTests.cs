@@ -56,4 +56,13 @@ public class ApiKeyAuthMiddlewareTests
         await mw.InvokeAsync(ctx);
         Assert.True(nextCalled());
     }
+
+    [Fact]
+    public async Task ReadyPath_BypassesAuth()
+    {
+        var (mw, nextCalled) = Build("secret");
+        var ctx = Ctx("/ready");
+        await mw.InvokeAsync(ctx);
+        Assert.True(nextCalled());
+    }
 }
