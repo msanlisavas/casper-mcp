@@ -710,7 +710,7 @@ The project uses GitHub Actions for continuous integration and Docker image publ
 | Workflow | Trigger | What it does |
 |---|---|---|
 | **Build and Test** | Push/PR to `main` | Restore, build, run all tests |
-| **Docker** | Push to `main` or version tag (`v*`) | Run tests, then build & push Docker image to `ghcr.io` |
+| **Docker** | Push to `main` or version tag (`v*`) | Build & push Docker image to `ghcr.io` (tests run in the Build and Test workflow) |
 
 Docker images are published to `ghcr.io/msanlisavas/casper-mcp` with these tags:
 
@@ -736,14 +736,18 @@ npx @modelcontextprotocol/inspector casper-mcp --api-key YOUR_API_KEY
 ```
 casper-mcp/
 ├── src/CasperMcp/
-│   ├── Configuration/     # Options and config
+│   ├── Configuration/     # Server + per-request options
 │   ├── Helpers/           # Formatting (motes → CSPR, etc.)
-│   ├── Middleware/        # HTTP middleware (auth)
+│   ├── Middleware/        # HTTP middleware (per-agent key check, apikey auth)
+│   ├── Observability/     # OpenTelemetry wiring, tool telemetry, key fingerprint
+│   ├── Remote/            # Per-request client factory, header parsing, error mapping, tool filter
 │   ├── Tools/             # MCP tool implementations (82 tools)
 │   └── Program.cs         # Entry point, DI setup, dual transport
-├── tests/CasperMcp.Tests/ # Unit + integration tests
+├── tests/CasperMcp.Tests/ # Unit + middleware + integration + HTTP-pipeline tests
+├── observability/         # Ready-to-run Grafana (otel-lgtm) + .NET Aspire stacks
 ├── mcp.json               # MCP server manifest
 ├── Dockerfile
+├── docker-compose.yml
 └── casper-mcp.slnx
 ```
 
