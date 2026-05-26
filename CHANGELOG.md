@@ -27,6 +27,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Per-request CSPR.Cloud key is now required in http mode (missing `X-CSPR-Cloud-Api-Key` → HTTP 401).
 - Tool count: 92 → 82 (removed 10 Watch* tools).
 
+### Changed
+
+- Upgraded `CSPR.Cloud.Net` dependency to **3.0.0**, which standardizes upstream response handling: `404 Not Found` now returns `null` (surfaced as a clean "not found" tool result) instead of throwing, `429` maps to a rate-limit error, and all `5xx` map to a server error.
+- Upstream errors are now mapped centrally to clear, safe messages (authentication failed / invalid parameters / rate limited / temporarily unavailable). Raw exception text, stack traces, and secrets are never returned to the agent or written to logs.
+
+### Fixed
+
+- **Centralized-accounts tools now work** (`get_centralized_accounts`, `get_centralized_account_info`) — previously returned `404` due to a wrong upstream path in the SDK (fixed in `CSPR.Cloud.Net` 3.0.0).
+- **Bidder tools** (`get_bidders`, `get_bidder`) now send the required `era_id`, defaulting to the current era — previously failed with `400 Empty era_id`.
+- **FT rate tools** (`get_ft_rates`, `get_ft_daily_rates`, and the `*_rate_latest` variants) now send the required `currency_id` (default USD) — previously failed with `400 Empty currency_id`.
+- **FT DEX rate tools** (`get_ft_dex_rate_latest`, `get_ft_dex_rates`, `get_ft_daily_dex_rate_latest`, `get_ft_daily_dex_rates`) now take a required `targetContractPackageHash` (the API mandates a target token) — previously failed with `400`.
+- **Block list views** (`get_latest_blocks`, `get_validator_blocks`) now emit the full block hash so an agent can chain it into `get_block` / `get_block_deploys` — previously truncated to 16 characters.
+
 ## [2.9.0] - 2026-05-07
 
 Version jumps directly from `1.2.0` to `2.9.0` to align with `CSPR.Cloud.Net` SDK and the CSPR Cloud API revision the MCP wraps. Going forward, the MCP version tracks the SDK + API version so consumers can see at a glance which API revision a given MCP build covers.

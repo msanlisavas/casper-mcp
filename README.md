@@ -274,6 +274,21 @@ From v3.0.0, casper-mcp is designed for **stateless multi-tenant remote deployme
 - **Pluggable auth:** choose `none` (WAF-trust), `apikey` (shared secret), or `jwt` (OAuth 2.1) at startup.
 - **Designed to sit behind a WAF/reverse proxy** for TLS termination, rate limiting, and IP filtering.
 
+### Built for remote AI agents behind a WAF (at scale)
+
+One shared instance can serve thousands of agents as a remote MCP endpoint. How each common requirement is met:
+
+| Requirement | How casper-mcp supports it |
+|---|---|
+| Run one shared instance in your infrastructure | A single **stateless** process — scale it horizontally behind your load balancer with no sticky sessions required |
+| Expose it to remote agents over HTTP | **Streamable HTTP** at `POST /mcp` — the transport the MCP C# SDK recommends for remote deployments (replaces the old `/sse`) |
+| Protect it with your WAF/auth layer | `--auth-mode none` trusts your fronting WAF; or enable `apikey` / `jwt` (OAuth 2.1) at the server edge |
+| Avoid long-lived/stateful session issues behind a WAF/proxy | **Stateless mode** — every tool call is an independent request → response (RPC-like). There is no persistent SSE session to pin to one backend |
+| Let each agent pass its own CSPR.Cloud key | Per-request `X-CSPR-Cloud-Api-Key` header. A fresh CSPR.Cloud client is built per request over a pooled connection, so credentials never mix between tenants |
+| No request that hangs for ~120s and trips proxy timeouts | The WebSocket `Watch*` tools (which held a request open up to 120s) were **removed**. Every remaining tool is request/response and returns within normal latency — safe under typical WAF/proxy idle timeouts |
+
+Per-tenant isolation and connection reuse are handled by `IHttpClientFactory` (pooled sockets) plus a fresh per-request client, so a single instance handles many distinct agent keys concurrently without leaking credentials across tenants or exhausting sockets.
+
 ### Run locally in http mode
 
 ```bash
@@ -282,13 +297,7 @@ dotnet run --project src/CasperMcp -- --transport http --port 3001
 
 Output:
 ```
-Casper MCP server starting on http://0.0.0.0:3001
-  Transport: HTTP (Streamable)
-  Network:   mainnet
-  Auth:      none
-  Health:    http://localhost:3001/health
-  Ready:     http://localhost:3001/ready
-  MCP:       http://localhost:3001/mcp
+Casper MCP (http) on http://0.0.0.0:3001/mcp | auth=None | default-network=mainnet
 ```
 
 Endpoints:
