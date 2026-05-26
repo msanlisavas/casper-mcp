@@ -17,14 +17,13 @@ public static class FtRateTools
         CasperCloudRestClient client,
         CasperMcpOptions options,
         [Description("The contract package hash of the fungible token")] string contractPackageHash,
-        [Description("Optional currency ID to filter by")] string? currencyId = null)
+        [Description("Currency ID (default USD=1)")] string currencyId = "1")
     {
         try
         {
             var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
             var filterParams = new FTRateFilterParameters();
-            if (!string.IsNullOrEmpty(currencyId))
-                filterParams.CurrencyId = currencyId;
+            filterParams.CurrencyId = currencyId;
 
             var result = await endpoint.FT.GetFTRateLatestAsync(contractPackageHash, filterParams);
 
@@ -54,6 +53,7 @@ public static class FtRateTools
         CasperCloudRestClient client,
         CasperMcpOptions options,
         [Description("The contract package hash of the fungible token")] string contractPackageHash,
+        [Description("Currency ID (default USD=1)")] string currencyId = "1",
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
@@ -65,6 +65,7 @@ public static class FtRateTools
                 PageNumber = page,
                 PageSize = Math.Min(pageSize, 250)
             };
+            parameters.FilterParameters.CurrencyId = currencyId;
 
             var result = await endpoint.FT.GetFTRatesAsync(contractPackageHash, parameters);
 
@@ -98,14 +99,13 @@ public static class FtRateTools
         CasperCloudRestClient client,
         CasperMcpOptions options,
         [Description("The contract package hash of the fungible token")] string contractPackageHash,
-        [Description("Optional currency ID to filter by")] string? currencyId = null)
+        [Description("Currency ID (default USD=1)")] string currencyId = "1")
     {
         try
         {
             var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
             var filterParams = new FTRateFilterParameters();
-            if (!string.IsNullOrEmpty(currencyId))
-                filterParams.CurrencyId = currencyId;
+            filterParams.CurrencyId = currencyId;
 
             var result = await endpoint.FT.GetFTDailyRateLatestAsync(contractPackageHash, filterParams);
 
@@ -133,6 +133,7 @@ public static class FtRateTools
         CasperCloudRestClient client,
         CasperMcpOptions options,
         [Description("The contract package hash of the fungible token")] string contractPackageHash,
+        [Description("Currency ID (default USD=1)")] string currencyId = "1",
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
@@ -144,6 +145,7 @@ public static class FtRateTools
                 PageNumber = page,
                 PageSize = Math.Min(pageSize, 250)
             };
+            parameters.FilterParameters.CurrencyId = currencyId;
 
             var result = await endpoint.FT.GetFTDailyRatesAsync(contractPackageHash, parameters);
 

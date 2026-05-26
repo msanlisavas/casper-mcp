@@ -15,12 +15,21 @@ public static class BidderTools
     public static async Task<string> GetBidder(
         CasperCloudRestClient client,
         CasperMcpOptions options,
-        [Description("The public key of the bidder")] string publicKey)
+        [Description("The public key of the bidder")] string publicKey,
+        [Description("Era ID (defaults to the current era)")] string? eraId = null)
     {
         try
         {
             var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+
+            // Fetch current era ID if not provided (required by the API)
+            var auctionMetrics = await endpoint.Auction.GetAuctionMetricsAsync();
+            var resolvedEra = !string.IsNullOrEmpty(eraId) ? eraId : auctionMetrics?.Data?.CurrentEraId?.ToString();
+            if (string.IsNullOrEmpty(resolvedEra))
+                return "Unable to determine current era. Cannot fetch bidder.";
+
             var parameters = new BidderRequestParameters();
+            parameters.FilterParameters.EraId = resolvedEra;
             var bidder = await endpoint.Bidder.GetBidderAsync(publicKey, parameters);
 
             if (bidder is null)
@@ -49,17 +58,26 @@ public static class BidderTools
     public static async Task<string> GetBidders(
         CasperCloudRestClient client,
         CasperMcpOptions options,
+        [Description("Era ID (defaults to the current era)")] string? eraId = null,
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
         try
         {
             var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+
+            // Fetch current era ID if not provided (required by the API)
+            var auctionMetrics = await endpoint.Auction.GetAuctionMetricsAsync();
+            var resolvedEra = !string.IsNullOrEmpty(eraId) ? eraId : auctionMetrics?.Data?.CurrentEraId?.ToString();
+            if (string.IsNullOrEmpty(resolvedEra))
+                return "Unable to determine current era. Cannot fetch bidders.";
+
             var parameters = new BiddersRequestParameters
             {
                 PageNumber = page,
                 PageSize = Math.Min(pageSize, 250)
             };
+            parameters.FilterParameters.EraId = resolvedEra;
 
             var result = await endpoint.Bidder.GetBiddersAsync(parameters);
 
