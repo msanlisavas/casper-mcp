@@ -178,14 +178,15 @@ public static class FtRateTools
         CasperCloudRestClient client,
         CasperMcpOptions options,
         [Description("The contract package hash of the fungible token")] string contractPackageHash,
-        [Description("Optional target token contract package hash")] string? targetContractPackageHash = null)
+        [Description("Required: the target token contract package hash (DEX rates are token-to-token)")] string targetContractPackageHash)
     {
         try
         {
             var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var filterParams = new FTDexRateFilterParameters();
-            if (!string.IsNullOrEmpty(targetContractPackageHash))
-                filterParams.TargetContractPackageHash = targetContractPackageHash;
+            var filterParams = new FTDexRateFilterParameters
+            {
+                TargetContractPackageHash = targetContractPackageHash
+            };
 
             var result = await endpoint.FT.GetFTDexRateLatestAsync(contractPackageHash, filterParams);
 
@@ -215,6 +216,7 @@ public static class FtRateTools
         CasperCloudRestClient client,
         CasperMcpOptions options,
         [Description("The contract package hash of the fungible token")] string contractPackageHash,
+        [Description("Required: the target token contract package hash (DEX rates are token-to-token)")] string targetContractPackageHash,
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
@@ -226,6 +228,7 @@ public static class FtRateTools
                 PageNumber = page,
                 PageSize = Math.Min(pageSize, 250)
             };
+            parameters.FilterParameters.TargetContractPackageHash = targetContractPackageHash;
 
             var result = await endpoint.FT.GetFTDexRatesAsync(contractPackageHash, parameters);
 
@@ -260,14 +263,15 @@ public static class FtRateTools
         CasperCloudRestClient client,
         CasperMcpOptions options,
         [Description("The contract package hash of the fungible token")] string contractPackageHash,
-        [Description("Optional target token contract package hash")] string? targetContractPackageHash = null)
+        [Description("Required: the target token contract package hash (DEX rates are token-to-token)")] string targetContractPackageHash)
     {
         try
         {
             var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var filterParams = new FTDexRateFilterParameters();
-            if (!string.IsNullOrEmpty(targetContractPackageHash))
-                filterParams.TargetContractPackageHash = targetContractPackageHash;
+            var filterParams = new FTDexRateFilterParameters
+            {
+                TargetContractPackageHash = targetContractPackageHash
+            };
 
             var result = await endpoint.FT.GetFTDailyDexRateLatestAsync(contractPackageHash, filterParams);
 
@@ -296,6 +300,7 @@ public static class FtRateTools
         CasperCloudRestClient client,
         CasperMcpOptions options,
         [Description("The contract package hash of the fungible token")] string contractPackageHash,
+        [Description("Required: the target token contract package hash (DEX rates are token-to-token)")] string targetContractPackageHash,
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
@@ -307,6 +312,7 @@ public static class FtRateTools
                 PageNumber = page,
                 PageSize = Math.Min(pageSize, 250)
             };
+            parameters.FilterParameters.TargetContractPackageHash = targetContractPackageHash;
 
             var result = await endpoint.FT.GetFTDailyDexRatesAsync(contractPackageHash, parameters);
 
