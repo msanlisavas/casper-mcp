@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY casper-mcp.slnx .
@@ -9,16 +9,13 @@ RUN dotnet restore
 COPY . .
 RUN dotnet publish src/CasperMcp/CasperMcp.csproj -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# Auth and transport config — pass via docker-compose.yml or CLI args
-ENV CASPER_MCP_AUTH_MODE=""
-ENV CASPER_MCP_AUTH_API_KEY=""
-ENV CASPER_MCP_AUTH_JWT_AUTHORITY=""
-ENV CASPER_MCP_AUTH_JWT_AUDIENCE=""
-ENV CASPER_MCP_PORT="3001"
+# Transport, auth, and credentials are supplied at runtime via CLI args or environment
+# (e.g. --transport http --port 3001 --auth-mode apikey, or CASPER_MCP_AUTH_* / CSPR_CLOUD_API_KEY).
+# See README.md and docker-compose.yml. Nothing secret is baked into the image.
 
 EXPOSE 3001
 
