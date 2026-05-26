@@ -16,27 +16,20 @@ public static class CsprNameTools
         CasperMcpOptions options,
         [Description("The CSPR.name to resolve (e.g., 'alice.cspr')")] string name)
     {
-        try
-        {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var result = await endpoint.CsprName.GetCsprNameResolutionAsync(name);
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var result = await endpoint.CsprName.GetCsprNameResolutionAsync(name);
 
-            if (result is null)
-                return $"CSPR.name not found: {name}";
+        if (result is null)
+            return $"CSPR.name not found: {name}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## CSPR.name Resolution");
-            sb.AppendLine($"- **Name:** {result.Name ?? "N/A"}");
-            sb.AppendLine($"- **Token ID:** {result.NameTokenId ?? "N/A"}");
-            sb.AppendLine($"- **Resolved Hash:** {FormattingHelpers.FormatHash(result.ResolvedHash)}");
-            sb.AppendLine($"- **Is Primary:** {(result.IsPrimary.HasValue ? FormattingHelpers.FormatBool(result.IsPrimary.Value) : "N/A")}");
-            sb.AppendLine($"- **Expires At:** {result.ExpiresAt ?? "N/A"}");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## CSPR.name Resolution");
+        sb.AppendLine($"- **Name:** {result.Name ?? "N/A"}");
+        sb.AppendLine($"- **Token ID:** {result.NameTokenId ?? "N/A"}");
+        sb.AppendLine($"- **Resolved Hash:** {FormattingHelpers.FormatHash(result.ResolvedHash)}");
+        sb.AppendLine($"- **Is Primary:** {(result.IsPrimary.HasValue ? FormattingHelpers.FormatBool(result.IsPrimary.Value) : "N/A")}");
+        sb.AppendLine($"- **Expires At:** {result.ExpiresAt ?? "N/A"}");
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        return sb.ToString();
     }
 }

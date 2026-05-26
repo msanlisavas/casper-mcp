@@ -18,28 +18,21 @@ public static class AwaitingDeployTools
         CasperMcpOptions options,
         [Description("The deploy hash")] string deployHash)
     {
-        try
-        {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var result = await endpoint.AwaitingDeploy.GetAwaitingDeployAsync(deployHash);
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var result = await endpoint.AwaitingDeploy.GetAwaitingDeployAsync(deployHash);
 
-            if (result?.Deploy is null)
-                return $"Awaiting deploy not found: {deployHash}";
+        if (result?.Deploy is null)
+            return $"Awaiting deploy not found: {deployHash}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Awaiting Deploy");
-            sb.AppendLine($"- **Deploy Hash:** {deployHash}");
-            sb.AppendLine($"- **Deploy JSON:**");
-            sb.AppendLine($"```json");
-            sb.AppendLine(result.Deploy.ToString());
-            sb.AppendLine($"```");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Awaiting Deploy");
+        sb.AppendLine($"- **Deploy Hash:** {deployHash}");
+        sb.AppendLine($"- **Deploy JSON:**");
+        sb.AppendLine($"```json");
+        sb.AppendLine(result.Deploy.ToString());
+        sb.AppendLine($"```");
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Create an awaiting deploy on the Casper Network. Submits a deploy JSON for multi-signature collection.")]
@@ -48,25 +41,18 @@ public static class AwaitingDeployTools
         CasperMcpOptions options,
         [Description("The deploy JSON string")] string deployJson)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var request = new CreateAwaitingDeployRequest
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var request = new CreateAwaitingDeployRequest
-            {
-                Deploy = JObject.Parse(deployJson)
-            };
+            Deploy = JObject.Parse(deployJson)
+        };
 
-            var result = await endpoint.AwaitingDeploy.CreateAwaitingDeployAsync(request);
+        var result = await endpoint.AwaitingDeploy.CreateAwaitingDeployAsync(request);
 
-            if (result?.Data == true)
-                return "Awaiting deploy created successfully.";
+        if (result?.Data == true)
+            return "Awaiting deploy created successfully.";
 
-            return "Failed to create awaiting deploy.";
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        return "Failed to create awaiting deploy.";
     }
 
     [McpServerTool, Description("Add an approval (signature) to an awaiting deploy on the Casper Network.")]
@@ -77,25 +63,18 @@ public static class AwaitingDeployTools
         [Description("The signer's public key")] string signer,
         [Description("The signature")] string signature)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var request = new AddApprovalRequest
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var request = new AddApprovalRequest
-            {
-                Signer = signer,
-                Signature = signature
-            };
+            Signer = signer,
+            Signature = signature
+        };
 
-            var result = await endpoint.AwaitingDeploy.AddAwaitingDeployApprovalsAsync(deployHash, request);
+        var result = await endpoint.AwaitingDeploy.AddAwaitingDeployApprovalsAsync(deployHash, request);
 
-            if (result?.Data == true)
-                return $"Approval added successfully to deploy: {deployHash}";
+        if (result?.Data == true)
+            return $"Approval added successfully to deploy: {deployHash}";
 
-            return $"Failed to add approval to deploy: {deployHash}";
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        return $"Failed to add approval to deploy: {deployHash}";
     }
 }

@@ -19,33 +19,26 @@ public static class FtRateTools
         [Description("The contract package hash of the fungible token")] string contractPackageHash,
         [Description("Currency ID (default USD=1)")] string currencyId = "1")
     {
-        try
-        {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var filterParams = new FTRateFilterParameters();
-            filterParams.CurrencyId = currencyId;
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var filterParams = new FTRateFilterParameters();
+        filterParams.CurrencyId = currencyId;
 
-            var result = await endpoint.FT.GetFTRateLatestAsync(contractPackageHash, filterParams);
+        var result = await endpoint.FT.GetFTRateLatestAsync(contractPackageHash, filterParams);
 
-            if (result is null)
-                return $"No rate data found for token: {contractPackageHash}";
+        if (result is null)
+            return $"No rate data found for token: {contractPackageHash}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Latest FT Rate");
-            sb.AppendLine($"- **Token:** {FormattingHelpers.FormatHash(result.TokenContractPackageHash)}");
-            sb.AppendLine($"- **Currency ID:** {result.CurrencyId?.ToString() ?? "N/A"}");
-            sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(result.Amount)}");
-            sb.AppendLine($"- **Volume:** {result.Volume ?? "N/A"}");
-            sb.AppendLine($"- **DEX ID:** {result.DexId?.ToString() ?? "N/A"}");
-            sb.AppendLine($"- **Transaction:** {FormattingHelpers.FormatHash(result.TransactionHash)}");
-            sb.AppendLine($"- **Timestamp:** {result.Timestamp ?? "N/A"}");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Latest FT Rate");
+        sb.AppendLine($"- **Token:** {FormattingHelpers.FormatHash(result.TokenContractPackageHash)}");
+        sb.AppendLine($"- **Currency ID:** {result.CurrencyId?.ToString() ?? "N/A"}");
+        sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(result.Amount)}");
+        sb.AppendLine($"- **Volume:** {result.Volume ?? "N/A"}");
+        sb.AppendLine($"- **DEX ID:** {result.DexId?.ToString() ?? "N/A"}");
+        sb.AppendLine($"- **Transaction:** {FormattingHelpers.FormatHash(result.TransactionHash)}");
+        sb.AppendLine($"- **Timestamp:** {result.Timestamp ?? "N/A"}");
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get historical fungible token rates for a contract package on the Casper Network.")]
@@ -57,41 +50,34 @@ public static class FtRateTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new FTRateRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new FTRateRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
-            parameters.FilterParameters.CurrencyId = currencyId;
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
+        parameters.FilterParameters.CurrencyId = currencyId;
 
-            var result = await endpoint.FT.GetFTRatesAsync(contractPackageHash, parameters);
+        var result = await endpoint.FT.GetFTRatesAsync(contractPackageHash, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No rate history found for token: {contractPackageHash}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No rate history found for token: {contractPackageHash}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## FT Rate History (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## FT Rate History (Page {page}, {result.ItemCount} total)");
 
-            foreach (var rate in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(rate.Amount)} | Currency: {rate.CurrencyId?.ToString() ?? "N/A"}");
-                sb.AppendLine($"  Volume: {rate.Volume ?? "N/A"} | DEX: {rate.DexId?.ToString() ?? "N/A"}");
-                sb.AppendLine($"  Timestamp: {rate.Timestamp ?? "N/A"}");
-            }
-
+        foreach (var rate in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(rate.Amount)} | Currency: {rate.CurrencyId?.ToString() ?? "N/A"}");
+            sb.AppendLine($"  Volume: {rate.Volume ?? "N/A"} | DEX: {rate.DexId?.ToString() ?? "N/A"}");
+            sb.AppendLine($"  Timestamp: {rate.Timestamp ?? "N/A"}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get the latest daily aggregated fungible token rate on the Casper Network.")]
@@ -101,31 +87,24 @@ public static class FtRateTools
         [Description("The contract package hash of the fungible token")] string contractPackageHash,
         [Description("Currency ID (default USD=1)")] string currencyId = "1")
     {
-        try
-        {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var filterParams = new FTRateFilterParameters();
-            filterParams.CurrencyId = currencyId;
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var filterParams = new FTRateFilterParameters();
+        filterParams.CurrencyId = currencyId;
 
-            var result = await endpoint.FT.GetFTDailyRateLatestAsync(contractPackageHash, filterParams);
+        var result = await endpoint.FT.GetFTDailyRateLatestAsync(contractPackageHash, filterParams);
 
-            if (result is null)
-                return $"No daily rate data found for token: {contractPackageHash}";
+        if (result is null)
+            return $"No daily rate data found for token: {contractPackageHash}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Latest Daily FT Rate");
-            sb.AppendLine($"- **Token:** {FormattingHelpers.FormatHash(result.TokenContractPackageHash)}");
-            sb.AppendLine($"- **Currency ID:** {result.CurrencyId?.ToString() ?? "N/A"}");
-            sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(result.Amount)}");
-            sb.AppendLine($"- **Volume:** {result.Volume ?? "N/A"}");
-            sb.AppendLine($"- **Date:** {result.Date ?? "N/A"}");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Latest Daily FT Rate");
+        sb.AppendLine($"- **Token:** {FormattingHelpers.FormatHash(result.TokenContractPackageHash)}");
+        sb.AppendLine($"- **Currency ID:** {result.CurrencyId?.ToString() ?? "N/A"}");
+        sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(result.Amount)}");
+        sb.AppendLine($"- **Volume:** {result.Volume ?? "N/A"}");
+        sb.AppendLine($"- **Date:** {result.Date ?? "N/A"}");
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get historical daily aggregated fungible token rates on the Casper Network.")]
@@ -137,40 +116,33 @@ public static class FtRateTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new FTDailyRateRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new FTDailyRateRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
-            parameters.FilterParameters.CurrencyId = currencyId;
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
+        parameters.FilterParameters.CurrencyId = currencyId;
 
-            var result = await endpoint.FT.GetFTDailyRatesAsync(contractPackageHash, parameters);
+        var result = await endpoint.FT.GetFTDailyRatesAsync(contractPackageHash, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No daily rate history found for token: {contractPackageHash}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No daily rate history found for token: {contractPackageHash}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Daily FT Rate History (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Daily FT Rate History (Page {page}, {result.ItemCount} total)");
 
-            foreach (var rate in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(rate.Amount)} | Currency: {rate.CurrencyId?.ToString() ?? "N/A"}");
-                sb.AppendLine($"  Volume: {rate.Volume ?? "N/A"} | Date: {rate.Date ?? "N/A"}");
-            }
-
+        foreach (var rate in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(rate.Amount)} | Currency: {rate.CurrencyId?.ToString() ?? "N/A"}");
+            sb.AppendLine($"  Volume: {rate.Volume ?? "N/A"} | Date: {rate.Date ?? "N/A"}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get the latest token-to-token DEX rate for a fungible token on the Casper Network.")]
@@ -180,35 +152,28 @@ public static class FtRateTools
         [Description("The contract package hash of the fungible token")] string contractPackageHash,
         [Description("Required: the target token contract package hash (DEX rates are token-to-token)")] string targetContractPackageHash)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var filterParams = new FTDexRateFilterParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var filterParams = new FTDexRateFilterParameters
-            {
-                TargetContractPackageHash = targetContractPackageHash
-            };
+            TargetContractPackageHash = targetContractPackageHash
+        };
 
-            var result = await endpoint.FT.GetFTDexRateLatestAsync(contractPackageHash, filterParams);
+        var result = await endpoint.FT.GetFTDexRateLatestAsync(contractPackageHash, filterParams);
 
-            if (result is null)
-                return $"No DEX rate data found for token: {contractPackageHash}";
+        if (result is null)
+            return $"No DEX rate data found for token: {contractPackageHash}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Latest FT DEX Rate");
-            sb.AppendLine($"- **Token:** {FormattingHelpers.FormatHash(result.TokenContractPackageHash)}");
-            sb.AppendLine($"- **Target Token:** {FormattingHelpers.FormatHash(result.TargetTokenContractPackageHash)}");
-            sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(result.Amount)}");
-            sb.AppendLine($"- **Volume:** {result.Volume ?? "N/A"}");
-            sb.AppendLine($"- **DEX ID:** {result.DexId?.ToString() ?? "N/A"}");
-            sb.AppendLine($"- **Transaction:** {FormattingHelpers.FormatHash(result.TransactionHash)}");
-            sb.AppendLine($"- **Timestamp:** {result.Timestamp ?? "N/A"}");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Latest FT DEX Rate");
+        sb.AppendLine($"- **Token:** {FormattingHelpers.FormatHash(result.TokenContractPackageHash)}");
+        sb.AppendLine($"- **Target Token:** {FormattingHelpers.FormatHash(result.TargetTokenContractPackageHash)}");
+        sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(result.Amount)}");
+        sb.AppendLine($"- **Volume:** {result.Volume ?? "N/A"}");
+        sb.AppendLine($"- **DEX ID:** {result.DexId?.ToString() ?? "N/A"}");
+        sb.AppendLine($"- **Transaction:** {FormattingHelpers.FormatHash(result.TransactionHash)}");
+        sb.AppendLine($"- **Timestamp:** {result.Timestamp ?? "N/A"}");
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get historical token-to-token DEX rates for a fungible token on the Casper Network.")]
@@ -220,42 +185,35 @@ public static class FtRateTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new FTDexRateRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new FTDexRateRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
-            parameters.FilterParameters.TargetContractPackageHash = targetContractPackageHash;
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
+        parameters.FilterParameters.TargetContractPackageHash = targetContractPackageHash;
 
-            var result = await endpoint.FT.GetFTDexRatesAsync(contractPackageHash, parameters);
+        var result = await endpoint.FT.GetFTDexRatesAsync(contractPackageHash, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No DEX rate history found for token: {contractPackageHash}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No DEX rate history found for token: {contractPackageHash}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## FT DEX Rate History (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## FT DEX Rate History (Page {page}, {result.ItemCount} total)");
 
-            foreach (var rate in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(rate.Amount)}");
-                sb.AppendLine($"  Target: {FormattingHelpers.FormatHash(rate.TargetTokenContractPackageHash)}");
-                sb.AppendLine($"  Volume: {rate.Volume ?? "N/A"} | DEX: {rate.DexId?.ToString() ?? "N/A"}");
-                sb.AppendLine($"  Timestamp: {rate.Timestamp ?? "N/A"}");
-            }
-
+        foreach (var rate in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(rate.Amount)}");
+            sb.AppendLine($"  Target: {FormattingHelpers.FormatHash(rate.TargetTokenContractPackageHash)}");
+            sb.AppendLine($"  Volume: {rate.Volume ?? "N/A"} | DEX: {rate.DexId?.ToString() ?? "N/A"}");
+            sb.AppendLine($"  Timestamp: {rate.Timestamp ?? "N/A"}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get the latest daily token-to-token DEX rate for a fungible token on the Casper Network.")]
@@ -265,34 +223,27 @@ public static class FtRateTools
         [Description("The contract package hash of the fungible token")] string contractPackageHash,
         [Description("Required: the target token contract package hash (DEX rates are token-to-token)")] string targetContractPackageHash)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var filterParams = new FTDexRateFilterParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var filterParams = new FTDexRateFilterParameters
-            {
-                TargetContractPackageHash = targetContractPackageHash
-            };
+            TargetContractPackageHash = targetContractPackageHash
+        };
 
-            var result = await endpoint.FT.GetFTDailyDexRateLatestAsync(contractPackageHash, filterParams);
+        var result = await endpoint.FT.GetFTDailyDexRateLatestAsync(contractPackageHash, filterParams);
 
-            if (result is null)
-                return $"No daily DEX rate data found for token: {contractPackageHash}";
+        if (result is null)
+            return $"No daily DEX rate data found for token: {contractPackageHash}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Latest Daily FT DEX Rate");
-            sb.AppendLine($"- **Token:** {FormattingHelpers.FormatHash(result.TokenContractPackageHash)}");
-            sb.AppendLine($"- **Target Token:** {FormattingHelpers.FormatHash(result.TargetTokenContractPackageHash)}");
-            sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(result.Amount)}");
-            sb.AppendLine($"- **Volume:** {result.Volume ?? "N/A"}");
-            sb.AppendLine($"- **DEX ID:** {result.DexId?.ToString() ?? "N/A"}");
-            sb.AppendLine($"- **Date:** {result.Date ?? "N/A"}");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Latest Daily FT DEX Rate");
+        sb.AppendLine($"- **Token:** {FormattingHelpers.FormatHash(result.TokenContractPackageHash)}");
+        sb.AppendLine($"- **Target Token:** {FormattingHelpers.FormatHash(result.TargetTokenContractPackageHash)}");
+        sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(result.Amount)}");
+        sb.AppendLine($"- **Volume:** {result.Volume ?? "N/A"}");
+        sb.AppendLine($"- **DEX ID:** {result.DexId?.ToString() ?? "N/A"}");
+        sb.AppendLine($"- **Date:** {result.Date ?? "N/A"}");
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get historical daily token-to-token DEX rates for a fungible token on the Casper Network.")]
@@ -304,41 +255,34 @@ public static class FtRateTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new FTDailyDexRateRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new FTDailyDexRateRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
-            parameters.FilterParameters.TargetContractPackageHash = targetContractPackageHash;
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
+        parameters.FilterParameters.TargetContractPackageHash = targetContractPackageHash;
 
-            var result = await endpoint.FT.GetFTDailyDexRatesAsync(contractPackageHash, parameters);
+        var result = await endpoint.FT.GetFTDailyDexRatesAsync(contractPackageHash, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No daily DEX rate history found for token: {contractPackageHash}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No daily DEX rate history found for token: {contractPackageHash}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Daily FT DEX Rate History (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Daily FT DEX Rate History (Page {page}, {result.ItemCount} total)");
 
-            foreach (var rate in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(rate.Amount)}");
-                sb.AppendLine($"  Target: {FormattingHelpers.FormatHash(rate.TargetTokenContractPackageHash)}");
-                sb.AppendLine($"  Volume: {rate.Volume ?? "N/A"} | DEX: {rate.DexId?.ToString() ?? "N/A"}");
-                sb.AppendLine($"  Date: {rate.Date ?? "N/A"}");
-            }
-
+        foreach (var rate in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Amount:** {FormattingHelpers.FormatDouble(rate.Amount)}");
+            sb.AppendLine($"  Target: {FormattingHelpers.FormatHash(rate.TargetTokenContractPackageHash)}");
+            sb.AppendLine($"  Volume: {rate.Volume ?? "N/A"} | DEX: {rate.DexId?.ToString() ?? "N/A"}");
+            sb.AppendLine($"  Date: {rate.Date ?? "N/A"}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 }

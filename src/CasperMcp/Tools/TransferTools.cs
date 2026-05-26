@@ -19,42 +19,35 @@ public static class TransferTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new TransferAccountRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new TransferAccountRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
 
-            var result = await endpoint.Transfer.GetAccountTransfersAsync(accountIdentifier, parameters);
+        var result = await endpoint.Transfer.GetAccountTransfersAsync(accountIdentifier, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No transfers found for account: {accountIdentifier}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No transfers found for account: {accountIdentifier}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Account Transfers (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Account Transfers (Page {page}, {result.ItemCount} total)");
 
-            foreach (var t in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Deploy:** {FormattingHelpers.FormatHash(t.DeployHash)}");
-                sb.AppendLine($"  From: {FormattingHelpers.FormatHash(t.FromPursePublicKey ?? t.InitiatorAccountHash)}");
-                sb.AppendLine($"  To: {FormattingHelpers.FormatHash(t.ToPublicKey ?? t.ToAccountHash)}");
-                sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(t.Amount)}");
-                sb.AppendLine($"  Block: {t.BlockHeight?.ToString() ?? "N/A"} | {FormattingHelpers.FormatTimestamp(t.Timestamp)}");
-            }
-
+        foreach (var t in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Deploy:** {FormattingHelpers.FormatHash(t.DeployHash)}");
+            sb.AppendLine($"  From: {FormattingHelpers.FormatHash(t.FromPursePublicKey ?? t.InitiatorAccountHash)}");
+            sb.AppendLine($"  To: {FormattingHelpers.FormatHash(t.ToPublicKey ?? t.ToAccountHash)}");
+            sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(t.Amount)}");
+            sb.AppendLine($"  Block: {t.BlockHeight?.ToString() ?? "N/A"} | {FormattingHelpers.FormatTimestamp(t.Timestamp)}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get native CSPR transfers for a specific deploy on the Casper Network.")]
@@ -65,42 +58,35 @@ public static class TransferTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new TransferDeployRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new TransferDeployRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
 
-            var result = await endpoint.Transfer.GetDeployTransfersAsync(deployHash, parameters);
+        var result = await endpoint.Transfer.GetDeployTransfersAsync(deployHash, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No transfers found for deploy: {deployHash}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No transfers found for deploy: {deployHash}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Deploy Transfers (Page {page}, {result.ItemCount} total)");
-            sb.AppendLine($"Deploy: {deployHash}");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Deploy Transfers (Page {page}, {result.ItemCount} total)");
+        sb.AppendLine($"Deploy: {deployHash}");
 
-            foreach (var t in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- From: {FormattingHelpers.FormatHash(t.FromPursePublicKey ?? t.InitiatorAccountHash)}");
-                sb.AppendLine($"  To: {FormattingHelpers.FormatHash(t.ToPublicKey ?? t.ToAccountHash)}");
-                sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(t.Amount)}");
-                sb.AppendLine($"  Block: {t.BlockHeight?.ToString() ?? "N/A"} | {FormattingHelpers.FormatTimestamp(t.Timestamp)}");
-            }
-
+        foreach (var t in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- From: {FormattingHelpers.FormatHash(t.FromPursePublicKey ?? t.InitiatorAccountHash)}");
+            sb.AppendLine($"  To: {FormattingHelpers.FormatHash(t.ToPublicKey ?? t.ToAccountHash)}");
+            sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(t.Amount)}");
+            sb.AppendLine($"  Block: {t.BlockHeight?.ToString() ?? "N/A"} | {FormattingHelpers.FormatTimestamp(t.Timestamp)}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get native CSPR transfers for a specific purse on the Casper Network.")]
@@ -111,41 +97,34 @@ public static class TransferTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new TransferAccountRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new TransferAccountRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
 
-            var result = await endpoint.Transfer.GetPurseTransfersAsync(purseUref, parameters);
+        var result = await endpoint.Transfer.GetPurseTransfersAsync(purseUref, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No transfers found for purse: {purseUref}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No transfers found for purse: {purseUref}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Purse Transfers (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Purse Transfers (Page {page}, {result.ItemCount} total)");
 
-            foreach (var t in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Deploy:** {FormattingHelpers.FormatHash(t.DeployHash)}");
-                sb.AppendLine($"  From: {FormattingHelpers.FormatHash(t.FromPursePublicKey ?? t.InitiatorAccountHash)}");
-                sb.AppendLine($"  To: {FormattingHelpers.FormatHash(t.ToPublicKey ?? t.ToAccountHash)}");
-                sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(t.Amount)}");
-                sb.AppendLine($"  Block: {t.BlockHeight?.ToString() ?? "N/A"} | {FormattingHelpers.FormatTimestamp(t.Timestamp)}");
-            }
-
+        foreach (var t in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Deploy:** {FormattingHelpers.FormatHash(t.DeployHash)}");
+            sb.AppendLine($"  From: {FormattingHelpers.FormatHash(t.FromPursePublicKey ?? t.InitiatorAccountHash)}");
+            sb.AppendLine($"  To: {FormattingHelpers.FormatHash(t.ToPublicKey ?? t.ToAccountHash)}");
+            sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(t.Amount)}");
+            sb.AppendLine($"  Block: {t.BlockHeight?.ToString() ?? "N/A"} | {FormattingHelpers.FormatTimestamp(t.Timestamp)}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 }

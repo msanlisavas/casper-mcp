@@ -20,34 +20,27 @@ public static class AccountTools
         CasperMcpOptions options,
         [Description("The public key or account hash of the account")] string accountIdentifier)
     {
-        try
-        {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var account = await endpoint.Account.GetAccountAsync(accountIdentifier);
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var account = await endpoint.Account.GetAccountAsync(accountIdentifier);
 
-            if (account is null)
-                return $"Account not found: {accountIdentifier}";
+        if (account is null)
+            return $"Account not found: {accountIdentifier}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Account Information");
-            sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(account.PublicKey)}");
-            sb.AppendLine($"- **Account Hash:** {FormattingHelpers.FormatHash(account.AccountHash)}");
-            sb.AppendLine($"- **Balance:** {FormattingHelpers.MotesToCspr(account.Balance)}");
-            sb.AppendLine($"- **Staked Balance:** {FormattingHelpers.MotesToCspr(account.StakedBalance)}");
-            sb.AppendLine($"- **Delegated Balance:** {FormattingHelpers.MotesToCspr(account.DelegatedBalance)}");
-            sb.AppendLine($"- **Undelegated Balance:** {FormattingHelpers.MotesToCspr(account.UndelegatedBalance)}");
-            sb.AppendLine($"- **Undelegating Balance:** {FormattingHelpers.MotesToCspr(account.UndelegatingBalance)}");
-            sb.AppendLine($"- **Auction Status:** {account.AuctionStatus ?? "N/A"}");
-            sb.AppendLine($"- **Main Purse:** {FormattingHelpers.FormatHash(account.MainPurseUref)}");
-            if (!string.IsNullOrEmpty(account.CsprName))
-                sb.AppendLine($"- **CSPR.name:** {account.CsprName}");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Account Information");
+        sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(account.PublicKey)}");
+        sb.AppendLine($"- **Account Hash:** {FormattingHelpers.FormatHash(account.AccountHash)}");
+        sb.AppendLine($"- **Balance:** {FormattingHelpers.MotesToCspr(account.Balance)}");
+        sb.AppendLine($"- **Staked Balance:** {FormattingHelpers.MotesToCspr(account.StakedBalance)}");
+        sb.AppendLine($"- **Delegated Balance:** {FormattingHelpers.MotesToCspr(account.DelegatedBalance)}");
+        sb.AppendLine($"- **Undelegated Balance:** {FormattingHelpers.MotesToCspr(account.UndelegatedBalance)}");
+        sb.AppendLine($"- **Undelegating Balance:** {FormattingHelpers.MotesToCspr(account.UndelegatingBalance)}");
+        sb.AppendLine($"- **Auction Status:** {account.AuctionStatus ?? "N/A"}");
+        sb.AppendLine($"- **Main Purse:** {FormattingHelpers.FormatHash(account.MainPurseUref)}");
+        if (!string.IsNullOrEmpty(account.CsprName))
+            sb.AppendLine($"- **CSPR.name:** {account.CsprName}");
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get the CSPR balance of a Casper Network account.")]
@@ -56,30 +49,23 @@ public static class AccountTools
         CasperMcpOptions options,
         [Description("The public key or account hash of the account")] string accountIdentifier)
     {
-        try
-        {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var account = await endpoint.Account.GetAccountAsync(accountIdentifier);
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var account = await endpoint.Account.GetAccountAsync(accountIdentifier);
 
-            if (account is null)
-                return $"Account not found: {accountIdentifier}";
+        if (account is null)
+            return $"Account not found: {accountIdentifier}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Account Balance");
-            sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(account.PublicKey)}");
-            sb.AppendLine($"- **Liquid Balance:** {FormattingHelpers.MotesToCspr(account.Balance)}");
-            sb.AppendLine($"- **Staked Balance:** {FormattingHelpers.MotesToCspr(account.StakedBalance)}");
-            sb.AppendLine($"- **Delegated Balance:** {FormattingHelpers.MotesToCspr(account.DelegatedBalance)}");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Account Balance");
+        sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(account.PublicKey)}");
+        sb.AppendLine($"- **Liquid Balance:** {FormattingHelpers.MotesToCspr(account.Balance)}");
+        sb.AppendLine($"- **Staked Balance:** {FormattingHelpers.MotesToCspr(account.StakedBalance)}");
+        sb.AppendLine($"- **Delegated Balance:** {FormattingHelpers.MotesToCspr(account.DelegatedBalance)}");
 
-            var totalBalance = FormattingHelpers.SumMotes(account.Balance, account.StakedBalance, account.DelegatedBalance);
-            sb.AppendLine($"- **Total (liquid + staked + delegated):** {FormattingHelpers.MotesToCspr(totalBalance)}");
+        var totalBalance = FormattingHelpers.SumMotes(account.Balance, account.StakedBalance, account.DelegatedBalance);
+        sb.AppendLine($"- **Total (liquid + staked + delegated):** {FormattingHelpers.MotesToCspr(totalBalance)}");
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get recent deploys (transactions) for a Casper Network account.")]
@@ -90,44 +76,37 @@ public static class AccountTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new AccountDeploysRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new AccountDeploysRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
 
-            var result = await endpoint.Deploy.GetAccountDeploysAsync(publicKey, parameters);
+        var result = await endpoint.Deploy.GetAccountDeploysAsync(publicKey, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No deploys found for account: {publicKey}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No deploys found for account: {publicKey}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Account Deploys (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Account Deploys (Page {page}, {result.ItemCount} total)");
 
-            foreach (var deploy in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Deploy Hash:** {FormattingHelpers.FormatHash(deploy.DeployHash)}");
-                sb.AppendLine($"- **Status:** {deploy.Status ?? "N/A"}");
-                sb.AppendLine($"- **Cost:** {FormattingHelpers.MotesToCspr(deploy.Cost)}");
-                sb.AppendLine($"- **Block Height:** {deploy.BlockHeight?.ToString() ?? "N/A"}");
-                sb.AppendLine($"- **Timestamp:** {FormattingHelpers.FormatTimestamp(deploy.Timestamp)}");
-                if (!string.IsNullOrEmpty(deploy.ErrorMessage))
-                    sb.AppendLine($"- **Error:** {deploy.ErrorMessage}");
-            }
-
+        foreach (var deploy in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Deploy Hash:** {FormattingHelpers.FormatHash(deploy.DeployHash)}");
+            sb.AppendLine($"- **Status:** {deploy.Status ?? "N/A"}");
+            sb.AppendLine($"- **Cost:** {FormattingHelpers.MotesToCspr(deploy.Cost)}");
+            sb.AppendLine($"- **Block Height:** {deploy.BlockHeight?.ToString() ?? "N/A"}");
+            sb.AppendLine($"- **Timestamp:** {FormattingHelpers.FormatTimestamp(deploy.Timestamp)}");
+            if (!string.IsNullOrEmpty(deploy.ErrorMessage))
+                sb.AppendLine($"- **Error:** {deploy.ErrorMessage}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get delegation information for a Casper Network account, showing which validators the account has delegated to.")]
@@ -138,39 +117,32 @@ public static class AccountTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new DelegationRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new DelegationRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
 
-            var result = await endpoint.Delegate.GetAccountDelegationsAsync(publicKey, parameters);
+        var result = await endpoint.Delegate.GetAccountDelegationsAsync(publicKey, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No delegations found for account: {publicKey}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No delegations found for account: {publicKey}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Account Delegations (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Account Delegations (Page {page}, {result.ItemCount} total)");
 
-            foreach (var delegation in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Validator:** {FormattingHelpers.FormatHash(delegation.ValidatorPublicKey)}");
-                sb.AppendLine($"- **Staked Amount:** {FormattingHelpers.MotesToCspr(delegation.Stake)}");
-            }
-
+        foreach (var delegation in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Validator:** {FormattingHelpers.FormatHash(delegation.ValidatorPublicKey)}");
+            sb.AppendLine($"- **Staked Amount:** {FormattingHelpers.MotesToCspr(delegation.Stake)}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get a paginated list of all accounts on the Casper Network.")]
@@ -180,40 +152,33 @@ public static class AccountTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new AccountsRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new AccountsRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
 
-            var result = await endpoint.Account.GetAccountsAsync(parameters);
+        var result = await endpoint.Account.GetAccountsAsync(parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return "No accounts found.";
+        if (result?.Data is null || result.Data.Count == 0)
+            return "No accounts found.";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Accounts (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Accounts (Page {page}, {result.ItemCount} total)");
 
-            foreach (var account in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(account.PublicKey)}");
-                sb.AppendLine($"  Account Hash: {FormattingHelpers.FormatHash(account.AccountHash)}");
-                sb.AppendLine($"  Balance: {FormattingHelpers.MotesToCspr(account.Balance)}");
-            }
-
+        foreach (var account in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(account.PublicKey)}");
+            sb.AppendLine($"  Account Hash: {FormattingHelpers.FormatHash(account.AccountHash)}");
+            sb.AppendLine($"  Balance: {FormattingHelpers.MotesToCspr(account.Balance)}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get contract packages deployed by a Casper Network account.")]
@@ -224,42 +189,35 @@ public static class AccountTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new AccountContractPackageRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new AccountContractPackageRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
 
-            var result = await endpoint.Contract.GetAccountContractPackagesAsync(publicKey, parameters);
+        var result = await endpoint.Contract.GetAccountContractPackagesAsync(publicKey, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No contract packages found for account: {publicKey}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No contract packages found for account: {publicKey}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Account Contract Packages (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Account Contract Packages (Page {page}, {result.ItemCount} total)");
 
-            foreach (var pkg in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Package Hash:** {FormattingHelpers.FormatHash(pkg.ContractPackageHash)}");
-                sb.AppendLine($"  Name: {pkg.Name ?? "N/A"}");
-                sb.AppendLine($"  Description: {pkg.Description ?? "N/A"}");
-                sb.AppendLine($"  Owner: {FormattingHelpers.FormatHash(pkg.OwnerPublicKey)}");
-                sb.AppendLine($"  Created: {FormattingHelpers.FormatTimestamp(pkg.Timestamp)}");
-            }
-
+        foreach (var pkg in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Package Hash:** {FormattingHelpers.FormatHash(pkg.ContractPackageHash)}");
+            sb.AppendLine($"  Name: {pkg.Name ?? "N/A"}");
+            sb.AppendLine($"  Description: {pkg.Description ?? "N/A"}");
+            sb.AppendLine($"  Owner: {FormattingHelpers.FormatHash(pkg.OwnerPublicKey)}");
+            sb.AppendLine($"  Created: {FormattingHelpers.FormatTimestamp(pkg.Timestamp)}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get delegation rewards for a Casper Network account.")]
@@ -270,41 +228,34 @@ public static class AccountTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new AccountDelegatorRewardRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new AccountDelegatorRewardRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
 
-            var result = await endpoint.Delegate.GetAccountDelegatorRewardsAsync(publicKey, parameters);
+        var result = await endpoint.Delegate.GetAccountDelegatorRewardsAsync(publicKey, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No delegation rewards found for account: {publicKey}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No delegation rewards found for account: {publicKey}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Account Delegation Rewards (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Account Delegation Rewards (Page {page}, {result.ItemCount} total)");
 
-            foreach (var reward in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Era:** {reward.EraId?.ToString() ?? "N/A"}");
-                sb.AppendLine($"  Validator: {FormattingHelpers.FormatHash(reward.ValidatorPublicKey)}");
-                sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(reward.Amount)}");
-                sb.AppendLine($"  Timestamp: {FormattingHelpers.FormatTimestamp(reward.Timestamp)}");
-            }
-
+        foreach (var reward in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Era:** {reward.EraId?.ToString() ?? "N/A"}");
+            sb.AppendLine($"  Validator: {FormattingHelpers.FormatHash(reward.ValidatorPublicKey)}");
+            sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(reward.Amount)}");
+            sb.AppendLine($"  Timestamp: {FormattingHelpers.FormatTimestamp(reward.Timestamp)}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get the total delegation rewards for a Casper Network account.")]
@@ -313,22 +264,15 @@ public static class AccountTools
         CasperMcpOptions options,
         [Description("The public key of the account")] string publicKey)
     {
-        try
-        {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var total = await endpoint.Delegate.GetTotalAccountDelegationRewards(publicKey);
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var total = await endpoint.Delegate.GetTotalAccountDelegationRewards(publicKey);
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Total Account Delegation Rewards");
-            sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(publicKey)}");
-            sb.AppendLine($"- **Total Rewards:** {FormattingHelpers.MotesToCspr(total)}");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Total Account Delegation Rewards");
+        sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(publicKey)}");
+        sb.AppendLine($"- **Total Rewards:** {FormattingHelpers.MotesToCspr(total)}");
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get the total delegation rewards paid out by a validator to its delegators.")]
@@ -337,22 +281,15 @@ public static class AccountTools
         CasperMcpOptions options,
         [Description("The public key of the validator")] string publicKey)
     {
-        try
-        {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var total = await endpoint.Delegate.GetTotalValidatorDelegationRewards(publicKey);
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var total = await endpoint.Delegate.GetTotalValidatorDelegationRewards(publicKey);
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Total Validator Delegator Rewards");
-            sb.AppendLine($"- **Validator Public Key:** {FormattingHelpers.FormatHash(publicKey)}");
-            sb.AppendLine($"- **Total Rewards:** {FormattingHelpers.MotesToCspr(total)}");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Total Validator Delegator Rewards");
+        sb.AppendLine($"- **Validator Public Key:** {FormattingHelpers.FormatHash(publicKey)}");
+        sb.AppendLine($"- **Total Rewards:** {FormattingHelpers.MotesToCspr(total)}");
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get pending undelegations for a Casper Network account. Funds are released 7 eras after the era of creation.")]
@@ -363,43 +300,36 @@ public static class AccountTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new DelegationRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new DelegationRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
 
-            var result = await endpoint.Delegate.GetAccountUndelegationsAsync(publicKey, parameters);
+        var result = await endpoint.Delegate.GetAccountUndelegationsAsync(publicKey, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No pending undelegations found for account: {publicKey}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No pending undelegations found for account: {publicKey}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Account Undelegations (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Account Undelegations (Page {page}, {result.ItemCount} total)");
 
-            foreach (var u in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Validator:** {FormattingHelpers.FormatHash(u.ValidatorPublicKey)}");
-                sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(u.Amount)}");
-                sb.AppendLine($"  Era of Creation: {u.EraOfCreation?.ToString() ?? "N/A"} (released 7 eras later)");
-                sb.AppendLine($"  Delegator Type: {(u.DelegatorIdentifierTypeId == 1 ? "Purse" : "Account")}");
-                sb.AppendLine($"  Bonding Purse: {FormattingHelpers.FormatHash(u.BondingPurse)}");
-                sb.AppendLine($"  Initiated: {FormattingHelpers.FormatTimestamp(u.Timestamp)}");
-            }
-
+        foreach (var u in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Validator:** {FormattingHelpers.FormatHash(u.ValidatorPublicKey)}");
+            sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(u.Amount)}");
+            sb.AppendLine($"  Era of Creation: {u.EraOfCreation?.ToString() ?? "N/A"} (released 7 eras later)");
+            sb.AppendLine($"  Delegator Type: {(u.DelegatorIdentifierTypeId == 1 ? "Purse" : "Account")}");
+            sb.AppendLine($"  Bonding Purse: {FormattingHelpers.FormatHash(u.BondingPurse)}");
+            sb.AppendLine($"  Initiated: {FormattingHelpers.FormatTimestamp(u.Timestamp)}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get delegations for a specific purse on the Casper Network.")]
@@ -410,39 +340,32 @@ public static class AccountTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new DelegationRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new DelegationRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
 
-            var result = await endpoint.Delegate.GetPurseDelegationsAsync(purseUref, parameters);
+        var result = await endpoint.Delegate.GetPurseDelegationsAsync(purseUref, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No delegations found for purse: {purseUref}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No delegations found for purse: {purseUref}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Purse Delegations (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Purse Delegations (Page {page}, {result.ItemCount} total)");
 
-            foreach (var delegation in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Validator:** {FormattingHelpers.FormatHash(delegation.ValidatorPublicKey)}");
-                sb.AppendLine($"- **Staked Amount:** {FormattingHelpers.MotesToCspr(delegation.Stake)}");
-            }
-
+        foreach (var delegation in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Validator:** {FormattingHelpers.FormatHash(delegation.ValidatorPublicKey)}");
+            sb.AppendLine($"- **Staked Amount:** {FormattingHelpers.MotesToCspr(delegation.Stake)}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get delegation rewards for a specific purse on the Casper Network.")]
@@ -453,41 +376,34 @@ public static class AccountTools
         [Description("Page number (default: 1)")] int page = 1,
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
-        try
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var parameters = new AccountDelegatorRewardRequestParameters
         {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var parameters = new AccountDelegatorRewardRequestParameters
-            {
-                PageNumber = page,
-                PageSize = Math.Min(pageSize, 250)
-            };
+            PageNumber = page,
+            PageSize = Math.Min(pageSize, 250)
+        };
 
-            var result = await endpoint.Delegate.GetPurseDelegationRewardsAsync(purseUref, parameters);
+        var result = await endpoint.Delegate.GetPurseDelegationRewardsAsync(purseUref, parameters);
 
-            if (result?.Data is null || result.Data.Count == 0)
-                return $"No delegation rewards found for purse: {purseUref}";
+        if (result?.Data is null || result.Data.Count == 0)
+            return $"No delegation rewards found for purse: {purseUref}";
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Purse Delegation Rewards (Page {page}, {result.ItemCount} total)");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Purse Delegation Rewards (Page {page}, {result.ItemCount} total)");
 
-            foreach (var reward in result.Data)
-            {
-                sb.AppendLine($"---");
-                sb.AppendLine($"- **Era:** {reward.EraId?.ToString() ?? "N/A"}");
-                sb.AppendLine($"  Validator: {FormattingHelpers.FormatHash(reward.ValidatorPublicKey)}");
-                sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(reward.Amount)}");
-                sb.AppendLine($"  Timestamp: {FormattingHelpers.FormatTimestamp(reward.Timestamp)}");
-            }
-
+        foreach (var reward in result.Data)
+        {
             sb.AppendLine($"---");
-            sb.AppendLine($"Page {page} of {result.PageCount}");
+            sb.AppendLine($"- **Era:** {reward.EraId?.ToString() ?? "N/A"}");
+            sb.AppendLine($"  Validator: {FormattingHelpers.FormatHash(reward.ValidatorPublicKey)}");
+            sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(reward.Amount)}");
+            sb.AppendLine($"  Timestamp: {FormattingHelpers.FormatTimestamp(reward.Timestamp)}");
+        }
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        sb.AppendLine($"---");
+        sb.AppendLine($"Page {page} of {result.PageCount}");
+
+        return sb.ToString();
     }
 
     [McpServerTool, Description("Get the total delegation rewards for a specific purse on the Casper Network.")]
@@ -496,21 +412,14 @@ public static class AccountTools
         CasperMcpOptions options,
         [Description("The purse URef")] string purseUref)
     {
-        try
-        {
-            var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-            var total = await endpoint.Delegate.GetTotalPurseDelegationRewardsAsync(purseUref);
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var total = await endpoint.Delegate.GetTotalPurseDelegationRewardsAsync(purseUref);
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Total Purse Delegation Rewards");
-            sb.AppendLine($"- **Purse:** {FormattingHelpers.FormatHash(purseUref)}");
-            sb.AppendLine($"- **Total Rewards:** {FormattingHelpers.MotesToCspr(total)}");
+        var sb = new StringBuilder();
+        sb.AppendLine($"## Total Purse Delegation Rewards");
+        sb.AppendLine($"- **Purse:** {FormattingHelpers.FormatHash(purseUref)}");
+        sb.AppendLine($"- **Total Rewards:** {FormattingHelpers.MotesToCspr(total)}");
 
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            return CasperMcp.Remote.UpstreamErrorMapper.Describe(ex);
-        }
+        return sb.ToString();
     }
 }
