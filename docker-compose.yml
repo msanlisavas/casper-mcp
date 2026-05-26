@@ -4,9 +4,11 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - CSPR_CLOUD_API_KEY=${CSPR_CLOUD_API_KEY}
-      - CASPER_MCP_SERVER_API_KEY=${CASPER_MCP_SERVER_API_KEY:-}
-    command: ["--transport", "sse", "--port", "3001"]
+      - CASPER_MCP_AUTH_MODE=${CASPER_MCP_AUTH_MODE:-none}
+      - CASPER_MCP_AUTH_API_KEY=${CASPER_MCP_AUTH_API_KEY:-}
+      - CASPER_MCP_AUTH_JWT_AUTHORITY=${CASPER_MCP_AUTH_JWT_AUTHORITY:-}
+      - CASPER_MCP_AUTH_JWT_AUDIENCE=${CASPER_MCP_AUTH_JWT_AUDIENCE:-}
+    command: ["--transport", "http", "--port", "3001"]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]

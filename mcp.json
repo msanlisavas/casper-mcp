@@ -1,10 +1,10 @@
 {
   "name": "casper-mcp",
-  "version": "2.9.0",
+  "version": "3.0.0",
   "description": "MCP server for the Casper Network blockchain via CSPR.Cloud API",
   "repository": "https://github.com/msanlisavas/casper-mcp",
   "license": "MIT",
-  "transport": ["stdio", "sse"],
+  "transport": ["stdio", "http"],
   "install": {
     "dotnet": {
       "command": "dotnet tool install -g CasperMcp",
@@ -14,23 +14,30 @@
       "command": "docker pull ghcr.io/msanlisavas/casper-mcp:latest",
       "run": "docker run -i ghcr.io/msanlisavas/casper-mcp:latest --api-key ${CSPR_CLOUD_API_KEY}"
     },
-    "docker-sse": {
+    "docker-http": {
       "command": "docker pull ghcr.io/msanlisavas/casper-mcp:latest",
-      "run": "docker run -p 3001:3001 ghcr.io/msanlisavas/casper-mcp:latest --api-key ${CSPR_CLOUD_API_KEY} --transport sse --port 3001"
+      "run": "docker run -p 3001:3001 ghcr.io/msanlisavas/casper-mcp:latest --transport http --port 3001"
     },
     "source": {
       "command": "git clone https://github.com/msanlisavas/casper-mcp.git && cd casper-mcp && dotnet build",
       "run": "dotnet run --project src/CasperMcp -- --api-key ${CSPR_CLOUD_API_KEY}"
     }
   },
-  "sse": {
-    "url": "http://localhost:3001/sse",
-    "healthEndpoint": "http://localhost:3001/health"
+  "http": {
+    "url": "http://localhost:3001/mcp",
+    "healthEndpoint": "http://localhost:3001/health",
+    "readyEndpoint": "http://localhost:3001/ready",
+    "requiredHeaders": {
+      "X-CSPR-Cloud-Api-Key": "Your CSPR.Cloud API key (required in http mode)"
+    },
+    "optionalHeaders": {
+      "X-Casper-Network": "mainnet or testnet (defaults to server --network)"
+    }
   },
   "config": {
     "required": {
       "CSPR_CLOUD_API_KEY": {
-        "description": "Your CSPR.Cloud API key. Get one at https://cspr.cloud",
+        "description": "Your CSPR.Cloud API key (stdio mode). Get one at https://cspr.cloud",
         "type": "string"
       }
     },
@@ -42,18 +49,37 @@
         "enum": ["mainnet", "testnet"]
       },
       "transport": {
-        "description": "Transport mode: stdio (default) or sse (HTTP/SSE for remote access)",
+        "description": "Transport mode: stdio (default, local) or http (Streamable HTTP for remote/multi-tenant access)",
         "type": "string",
         "default": "stdio",
-        "enum": ["stdio", "sse"]
+        "enum": ["stdio", "http"]
       },
       "port": {
-        "description": "HTTP port for SSE transport mode",
+        "description": "HTTP port for http transport mode",
         "type": "integer",
         "default": 3001
       },
-      "CASPER_MCP_SERVER_API_KEY": {
-        "description": "Optional API key to authenticate MCP clients in SSE mode",
+      "mcp-path": {
+        "description": "URL path for the MCP endpoint in http mode",
+        "type": "string",
+        "default": "/mcp"
+      },
+      "CASPER_MCP_AUTH_MODE": {
+        "description": "Auth mode for http transport: none (WAF-trust), apikey (shared secret), or jwt (OAuth 2.1)",
+        "type": "string",
+        "default": "none",
+        "enum": ["none", "apikey", "jwt"]
+      },
+      "CASPER_MCP_AUTH_API_KEY": {
+        "description": "Shared secret for apikey auth mode",
+        "type": "string"
+      },
+      "CASPER_MCP_AUTH_JWT_AUTHORITY": {
+        "description": "JWT authority URL for jwt auth mode",
+        "type": "string"
+      },
+      "CASPER_MCP_AUTH_JWT_AUDIENCE": {
+        "description": "JWT audience for jwt auth mode",
         "type": "string"
       }
     }
@@ -139,16 +165,6 @@
     "GetPurseDelegationRewards",
     "GetTotalPurseDelegationRewards",
     "GetValidatorEraRewards",
-    "WatchBlocks",
-    "WatchDeploys",
-    "WatchTransfers",
-    "WatchAccountBalances",
-    "WatchContracts",
-    "WatchContractPackages",
-    "WatchContractEvents",
-    "WatchFtTokenActions",
-    "WatchNfts",
-    "WatchNftActions",
     "GetAccountUndelegations",
     "GetNetworkNfts"
   ]
