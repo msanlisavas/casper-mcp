@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Pre-dispatch rejections on `/mcp` are now valid JSON-RPC 2.0 errors.** When a request to the MCP endpoint is rejected before tool dispatch — missing `X-CSPR-Cloud-Api-Key`, invalid `X-Casper-Network`, or a failed `apikey`-mode shared secret — the server now returns a JSON-RPC error envelope (`{"jsonrpc":"2.0","error":{"code","message"},"id"}`) instead of a bare `{"error":"..."}` body. MCP clients (e.g. Codex/`rmcp`) deserialize the response body as a JSON-RPC message regardless of HTTP status, so the old shape produced an opaque "did not match any variant of `JsonRpcMessage`" error instead of the real reason; the envelope lets clients surface the actual message. HTTP status is unchanged (missing key → `401`, invalid network → `400`) and the request `id` is echoed back when present. The missing-key message is now self-explanatory for agents — it names the `CSPR_CLOUD_API_KEY` environment variable, the `X-CSPR-Cloud-Api-Key` header it maps to, and that the client must be restarted — so an assistant can walk the user through their local MCP-client config (e.g. a Codex `env_http_headers = { "X-CSPR-Cloud-Api-Key" = "CSPR_CLOUD_API_KEY" }` entry in `~/.codex/config.toml`). Non-`/mcp` paths and the `/health`·`/ready`·`/.well-known` probes keep their existing plain shape. The framework-emitted JWT `401` (`--auth-mode jwt`) is unchanged.
+
 ## [3.0.0] - 2026-05-26
 
 ### Added

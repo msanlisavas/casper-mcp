@@ -1,7 +1,10 @@
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using CasperMcp.Configuration;
+using CasperMcp.Remote;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CasperMcp.Middleware;
 
@@ -34,6 +37,16 @@ public class ApiKeyAuthMiddleware
         var presented = ExtractKey(context.Request);
         if (presented is null || !FixedTimeEquals(presented))
         {
+            // On the MCP endpoint, return a JSON-RPC error envelope so clients surface the
+            // reason instead of crashing on an unexpected body (same fix as the per-agent gate).
+            var mcpPath = context.RequestServices?.GetService<ServerConfig>()?.McpPath ?? "/mcp";
+            if (path.StartsWithSegments(mcpPath))
+            {
+                var id = await JsonRpc.TryReadRpcId(context.Request);
+                await JsonRpc.WriteError(context, (int)HttpStatusCode.Unauthorized, JsonRpc.InvalidRequest, "Unauthorized.", id);
+                return;
+            }
+
             context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync("""{"error":"Unauthorized."}""");

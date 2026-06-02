@@ -153,6 +153,37 @@ public class HttpPipelineTests : IDisposable
     }
 
     // -----------------------------------------------------------------------
+    // Test 2b — Missing CSPR key on /mcp → body is a parseable JSON-RPC 2.0
+    // error (not a bare {"error":...}) so MCP clients surface the real message
+    // instead of crashing on deserialization. Echoes the request id.
+    // -----------------------------------------------------------------------
+    [Fact]
+    public async Task MissingCsprKey_OnMcp_ReturnsParseableJsonRpcError_WithEchoedId()
+    {
+        using var factory = CreateFactory(BaseEnv());
+        var client = factory.CreateClient();
+
+        var content = JsonRpc("initialize", id: 99);
+        var msg = new HttpRequestMessage(HttpMethod.Post, "/mcp") { Content = content };
+        msg.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        msg.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+        // deliberately no X-CSPR-Cloud-Api-Key
+
+        var response = await client.SendAsync(msg);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+
+        var body = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(body);
+        var root = doc.RootElement;
+        Assert.Equal("2.0", root.GetProperty("jsonrpc").GetString());
+        Assert.Equal(-32600, root.GetProperty("error").GetProperty("code").GetInt32());
+        Assert.Equal(99, root.GetProperty("id").GetInt32());
+        var message = root.GetProperty("error").GetProperty("message").GetString();
+        Assert.Contains("X-CSPR-Cloud-Api-Key", message);
+        Assert.Contains("CSPR_CLOUD_API_KEY", message);
+    }
+
+    // -----------------------------------------------------------------------
     // Test 3 — Invalid network → 400
     // -----------------------------------------------------------------------
     [Fact]
