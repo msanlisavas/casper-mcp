@@ -1,6 +1,6 @@
 {
   "name": "casper-mcp",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "MCP server for the Casper Network blockchain via CSPR.Cloud API",
   "repository": "https://github.com/msanlisavas/casper-mcp",
   "license": "MIT",
@@ -80,6 +80,42 @@
       },
       "CASPER_MCP_AUTH_JWT_AUDIENCE": {
         "description": "JWT audience for jwt auth mode",
+        "type": "string"
+      },
+      "CASPER_MCP_ENABLE_WRITES": {
+        "description": "Enable the local stdio signer (write tools). Never valid with http transport.",
+        "type": "string"
+      },
+      "CASPER_MCP_KEY_PATH": {
+        "description": "Path to the signer's PEM secret key (required when writes are enabled).",
+        "type": "string"
+      },
+      "CASPER_MCP_KEY_ALGO": {
+        "description": "Signer key algorithm: ed25519 (default) or secp256k1.",
+        "type": "string"
+      },
+      "CASPER_MCP_POLICY_PATH": {
+        "description": "Path to the write-policy JSON (default ~/.casper-mcp/policy.json).",
+        "type": "string"
+      },
+      "CASPER_MCP_MAINNET_ENABLED": {
+        "description": "Allow mainnet writes (default false → testnet only).",
+        "type": "string"
+      },
+      "CASPER_MCP_PER_TX_CSPR": {
+        "description": "Per-transaction cap in CSPR (default 100).",
+        "type": "string"
+      },
+      "CASPER_MCP_PER_DAY_CSPR": {
+        "description": "Daily transfer cap in CSPR (default 500).",
+        "type": "string"
+      },
+      "CASPER_MCP_ALLOW_RECIPIENTS": {
+        "description": "Comma-separated allowlisted recipient public keys.",
+        "type": "string"
+      },
+      "CASPER_MCP_ALLOW_VALIDATORS": {
+        "description": "Comma-separated allowlisted validator public keys.",
         "type": "string"
       }
     }
@@ -166,6 +202,11 @@
     "GetTotalPurseDelegationRewards",
     "GetValidatorEraRewards",
     "GetAccountUndelegations",
-    "GetNetworkNfts"
+    "GetNetworkNfts",
+    "BuildTransferTransaction",
+    "BuildDelegateTransaction",
+    "BuildUndelegateTransaction",
+    "BuildRedelegateTransaction",
+    "SignAndSubmitTransaction"
   ]
 }
