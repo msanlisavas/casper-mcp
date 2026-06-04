@@ -2,6 +2,7 @@ using CasperMcp.Configuration;
 using CasperMcp.Middleware;
 using CasperMcp.Observability;
 using CasperMcp.Remote;
+using CasperMcp.Writes;
 using CSPR.Cloud.Net.Clients;
 using CSPR.Cloud.Net.Objects.Config;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -200,7 +201,23 @@ hostBuilder.Logging.SetMinimumLevel(LogLevel.Warning);
 
 hostBuilder.Services.AddSingleton(stdioClient);
 hostBuilder.Services.AddSingleton(new CasperMcpOptions { Network = config.DefaultNetwork });
-hostBuilder.Services.AddMcpServer().WithStdioServerTransport().WithToolsFromAssembly();
+
+var mcpStdio = hostBuilder.Services.AddMcpServer().WithStdioServerTransport().WithToolsFromAssembly();
+
+// Write tools live ONLY on the stdio surface and ONLY when writes are enabled. They are not
+// [McpServerToolType]-annotated, so WithToolsFromAssembly never picks them up — the remote http
+// surface stays read-only. Here we register them explicitly alongside the signer they depend on.
+if (config.WritesEnabled)
+{
+    var signer = SignerFactory.Create(config);
+    hostBuilder.Services.AddSingleton(signer);
+    // The tool classes are `static` (only static tool methods), so the generic WithTools<T>()
+    // overload can't be used (CS0718: static types are not valid type arguments). Register them via
+    // the IEnumerable<Type> overload, which accepts typeof(...) of a static class.
+    mcpStdio.WithTools([typeof(CasperMcp.Tools.TransactionBuildTools),
+                        typeof(CasperMcp.Tools.TransactionSignTools)]);
+    Console.Error.WriteLine($"casper-mcp signer ENABLED (stdio) | network={config.DefaultNetwork} | key={signer.SignerPublicKeyShort} | writes=transfer,delegate,undelegate,redelegate");
+}
 
 await hostBuilder.Build().RunAsync();
 return 0;

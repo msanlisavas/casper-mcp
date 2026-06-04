@@ -34,6 +34,9 @@ public sealed class CasperSigner
         _submit = submit;
     }
 
+    /// <summary>A short, log-safe prefix of the signer's PUBLIC key (never the secret) for the startup banner.</summary>
+    public string SignerPublicKeyShort => _signerPkHex.Length > 12 ? _signerPkHex[..12] + "…" : _signerPkHex;
+
     public (string json, string preview) BuildTransfer(string recipient, decimal cspr) => _builder.BuildTransfer(recipient, cspr);
     public (string json, string preview) BuildDelegate(string validator, decimal cspr) => _builder.BuildDelegate(validator, cspr);
     public (string json, string preview) BuildUndelegate(string validator, decimal cspr) => _builder.BuildUndelegate(validator, cspr);
