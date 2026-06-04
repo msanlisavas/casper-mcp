@@ -19,6 +19,11 @@ if (Environment.GetEnvironmentVariable("CASPER_MCP_TRANSPORT") is { Length: > 0 
 if (Environment.GetEnvironmentVariable("CASPER_MCP_NETWORK") is { Length: > 0 } envNetwork) config.DefaultNetwork = envNetwork;
 if (Environment.GetEnvironmentVariable("CASPER_MCP_PATH") is { Length: > 0 } envPath) config.McpPath = envPath;
 if (int.TryParse(Environment.GetEnvironmentVariable("CASPER_MCP_PORT"), out var envPort)) config.Port = envPort;
+if (Environment.GetEnvironmentVariable("CASPER_MCP_ENABLE_WRITES") is "1" or "true") config.WritesEnabled = true;
+if (Environment.GetEnvironmentVariable("CASPER_MCP_KEY_PATH") is { Length: > 0 } envKeyPath) config.KeyPath = envKeyPath;
+if (Environment.GetEnvironmentVariable("CASPER_MCP_KEY_ALGO") is { Length: > 0 } envKeyAlgo) config.KeyAlgo = envKeyAlgo;
+if (Environment.GetEnvironmentVariable("CASPER_MCP_POLICY_PATH") is { Length: > 0 } envPolicyPath) config.PolicyPath = envPolicyPath;
+if (Environment.GetEnvironmentVariable("CASPER_MCP_NODE_RPC_URL") is { Length: > 0 } envNodeUrl) config.NodeRpcUrl = envNodeUrl;
 
 for (int i = 0; i < args.Length; i++)
 {
@@ -29,6 +34,11 @@ for (int i = 0; i < args.Length; i++)
         case "--transport" when i + 1 < args.Length: config.Transport = args[++i]; break;
         case "--port" when i + 1 < args.Length: if (int.TryParse(args[++i], out var p)) config.Port = p; break;
         case "--mcp-path" when i + 1 < args.Length: config.McpPath = args[++i]; break;
+        case "--enable-writes": config.WritesEnabled = true; break;
+        case "--key-path" when i + 1 < args.Length: config.KeyPath = args[++i]; break;
+        case "--key-algo" when i + 1 < args.Length: config.KeyAlgo = args[++i]; break;
+        case "--policy-path" when i + 1 < args.Length: config.PolicyPath = args[++i]; break;
+        case "--node-rpc-url" when i + 1 < args.Length: config.NodeRpcUrl = args[++i]; break;
         case "--auth-mode" when i + 1 < args.Length: config.AuthMode = ParseAuthMode(args[++i]); break;
         case "--auth-api-key" when i + 1 < args.Length: config.AuthApiKey = args[++i]; break;
         case "--auth-jwt-authority" when i + 1 < args.Length: config.JwtAuthority = args[++i]; break;
@@ -55,6 +65,11 @@ static AuthMode ParseAuthMode(string value) => value.ToLowerInvariant() switch
 
 if (config.IsHttp)
 {
+    if (config.WritesEnabled)
+    {
+        Console.Error.WriteLine("Error: --enable-writes is not allowed with http transport. Run the signer locally over stdio.");
+        return 1;
+    }
     if (config.AuthMode == AuthMode.ApiKey && string.IsNullOrEmpty(config.AuthApiKey))
     {
         Console.Error.WriteLine("Error: --auth-api-key (or CASPER_MCP_AUTH_API_KEY) is required when --auth-mode=apikey.");
@@ -165,6 +180,13 @@ if (config.IsHttp)
 if (string.IsNullOrEmpty(config.StdioApiKey))
 {
     Console.Error.WriteLine("Error: API key is required in stdio mode. Provide via --api-key or CSPR_CLOUD_API_KEY.");
+    return 1;
+}
+
+var (writesOk, writesError) = ServerConfig.ValidateWriteConfig(config);
+if (!writesOk)
+{
+    Console.Error.WriteLine($"Error: {writesError}");
     return 1;
 }
 
