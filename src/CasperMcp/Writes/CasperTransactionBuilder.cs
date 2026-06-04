@@ -65,7 +65,7 @@ public sealed class CasperTransactionBuilder
         sb.AppendLine($"- **Action:** {action} {targetDesc}");
         sb.AppendLine($"- **Amount:** {amountCspr.ToString(System.Globalization.CultureInfo.InvariantCulture)} CSPR ({ToMotes(amountCspr)} motes)");
         sb.AppendLine($"- **Network:** {_chainName}");
-        sb.AppendLine($"- **Est. fee (payment):** {paymentMotes / 1_000_000_000m} CSPR ({paymentMotes} motes)");
+        sb.AppendLine($"- **Est. fee (payment):** {(paymentMotes / 1_000_000_000m).ToString(System.Globalization.CultureInfo.InvariantCulture)} CSPR ({paymentMotes} motes)");
         sb.AppendLine($"- **Sender:** {_signer}");
         sb.AppendLine($"- **Transaction hash (to be signed):** {hash}");
         sb.AppendLine();
