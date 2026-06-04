@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-06-05
+
+### Added
+- **Local autonomous signer (stdio-only).** Five new write tools — `BuildTransferTransaction`,
+  `BuildDelegateTransaction`, `BuildUndelegateTransaction`, `BuildRedelegateTransaction`,
+  `SignAndSubmitTransaction` — for native CSPR transfers and staking, built on `Casper.Network.SDK`
+  3.2.0 (`TransactionV1` / `account_put_transaction`).
+- **Local fail-closed policy engine:** recipient/validator allowlists, per-tx and daily caps,
+  testnet-default with explicit mainnet opt-in, sender check, byte-level validation, and an
+  append-only audit log + spend ledger.
+- `--enable-writes`, `--key-path`, `--key-algo`, `--policy-path`, `--node-rpc-url` flags (+ env).
+- Self-contained single-file release binaries (win-x64 / osx-arm64 / linux-x64).
+
+### Security
+- Writes are **stdio-only**; the remote HTTP surface stays strictly read-only (enforced by
+  registration + a regression test). The private key never leaves the local process and its
+  signature is never returned to the agent. See the README threat model for mainnet guidance.
+
 ## [3.0.1] - 2026-06-02
 
 ### Fixed
