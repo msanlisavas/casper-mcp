@@ -37,4 +37,28 @@ public class SignerStartupTests
         var (ok, _) = ServerConfig.ValidateWriteConfig(new ServerConfig { WritesEnabled = false, Transport = "http" });
         Assert.True(ok);
     }
+
+    [Fact]
+    public void WriteMode_Without_Explicit_Network_Defaults_To_Testnet()
+    {
+        var cfg = new ServerConfig { WritesEnabled = true, DefaultNetwork = "mainnet", NetworkExplicitlySet = false };
+        ServerConfig.ApplyWriteModeNetworkDefault(cfg);
+        Assert.Equal("testnet", cfg.DefaultNetwork);
+    }
+
+    [Fact]
+    public void WriteMode_With_Explicit_Mainnet_Stays_Mainnet()
+    {
+        var cfg = new ServerConfig { WritesEnabled = true, DefaultNetwork = "mainnet", NetworkExplicitlySet = true };
+        ServerConfig.ApplyWriteModeNetworkDefault(cfg);
+        Assert.Equal("mainnet", cfg.DefaultNetwork);
+    }
+
+    [Fact]
+    public void ReadOnly_Mode_Network_Unchanged()
+    {
+        var cfg = new ServerConfig { WritesEnabled = false, DefaultNetwork = "mainnet", NetworkExplicitlySet = false };
+        ServerConfig.ApplyWriteModeNetworkDefault(cfg);
+        Assert.Equal("mainnet", cfg.DefaultNetwork);
+    }
 }

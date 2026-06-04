@@ -27,6 +27,9 @@ public class ServerConfig
 
     public bool IsHttp => Transport.Equals("http", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Set to true when the network was explicitly chosen via --network arg or CASPER_MCP_NETWORK env var.</summary>
+    public bool NetworkExplicitlySet { get; set; }
+
     /// <summary>When true, the stdio signer (write tools) is enabled. Incompatible with http transport.</summary>
     public bool WritesEnabled { get; set; }
 
@@ -41,6 +44,14 @@ public class ServerConfig
 
     /// <summary>Optional override for the node JSON-RPC URL used for submission. Empty ⇒ CSPR.Cloud node by network.</summary>
     public string NodeRpcUrl { get; set; } = string.Empty;
+
+    /// <summary>When the signer is enabled and no network was explicitly chosen, default the whole
+    /// write-mode process to testnet (the safest path). Explicit --network/env is always honored.</summary>
+    public static void ApplyWriteModeNetworkDefault(ServerConfig config)
+    {
+        if (config.WritesEnabled && !config.NetworkExplicitlySet)
+            config.DefaultNetwork = "testnet";
+    }
 
     /// <summary>Fail-closed validation of write-mode config. Returns (ok, error).</summary>
     public static (bool ok, string error) ValidateWriteConfig(ServerConfig config)

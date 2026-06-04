@@ -88,4 +88,13 @@ public class PolicyEngineTests
         var d = Eval(Transfer(1 * Cspr), Policy(recips: Array.Empty<string>()));
         Assert.False(d.Allowed);
     }
+
+    [Fact]
+    public void Fractional_PerTx_Cap_Is_Not_Truncated()
+    {
+        // 2.5 CSPR cap must allow exactly 2.5 CSPR and block 2.6 CSPR.
+        var p = Policy(perTx: 2.5m, perDay: 100m);
+        Assert.True(Eval(Transfer(new BigInteger(2_500_000_000)), p).Allowed);   // 2.5 CSPR ok
+        Assert.False(Eval(Transfer(new BigInteger(2_600_000_000)), p).Allowed);  // 2.6 CSPR blocked
+    }
 }

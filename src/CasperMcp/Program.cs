@@ -17,7 +17,7 @@ var config = new ServerConfig();
 
 // Environment defaults (container-friendly). CLI args below override these.
 if (Environment.GetEnvironmentVariable("CASPER_MCP_TRANSPORT") is { Length: > 0 } envTransport) config.Transport = envTransport;
-if (Environment.GetEnvironmentVariable("CASPER_MCP_NETWORK") is { Length: > 0 } envNetwork) config.DefaultNetwork = envNetwork;
+if (Environment.GetEnvironmentVariable("CASPER_MCP_NETWORK") is { Length: > 0 } envNetwork) { config.DefaultNetwork = envNetwork; config.NetworkExplicitlySet = true; }
 if (Environment.GetEnvironmentVariable("CASPER_MCP_PATH") is { Length: > 0 } envPath) config.McpPath = envPath;
 if (int.TryParse(Environment.GetEnvironmentVariable("CASPER_MCP_PORT"), out var envPort)) config.Port = envPort;
 if (Environment.GetEnvironmentVariable("CASPER_MCP_ENABLE_WRITES") is "1" or "true") config.WritesEnabled = true;
@@ -31,7 +31,7 @@ for (int i = 0; i < args.Length; i++)
     switch (args[i])
     {
         case "--api-key" when i + 1 < args.Length: config.StdioApiKey = args[++i]; break;
-        case "--network" when i + 1 < args.Length: config.DefaultNetwork = args[++i]; break;
+        case "--network" when i + 1 < args.Length: config.DefaultNetwork = args[++i]; config.NetworkExplicitlySet = true; break;
         case "--transport" when i + 1 < args.Length: config.Transport = args[++i]; break;
         case "--port" when i + 1 < args.Length: if (int.TryParse(args[++i], out var p)) config.Port = p; break;
         case "--mcp-path" when i + 1 < args.Length: config.McpPath = args[++i]; break;
@@ -190,6 +190,8 @@ if (!writesOk)
     Console.Error.WriteLine($"Error: {writesError}");
     return 1;
 }
+
+ServerConfig.ApplyWriteModeNetworkDefault(config);
 
 var stdioConfig = new CasperCloudClientConfig(config.StdioApiKey);
 var stdioClient = new CasperCloudRestClient(stdioConfig);

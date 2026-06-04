@@ -25,7 +25,7 @@ public static class PolicyEngine
             return PolicyDecision.Deny("Refused: mainnet writes are disabled (set mainnet_enabled to allow).");
 
         // 3) Per-tx cap (sanity bound on all ops).
-        var perTxMotes = (BigInteger)(policy.PerTxCspr) * MotesPerCspr;
+        var perTxMotes = (BigInteger)(policy.PerTxCspr * 1_000_000_000m);
         if (intent.AmountMotes > perTxMotes)
             return PolicyDecision.Deny($"Refused: amount exceeds the per-transaction cap of {policy.PerTxCspr} CSPR.");
 
@@ -35,7 +35,7 @@ public static class PolicyEngine
             case WriteKind.Transfer:
                 if (!policy.AllowRecipients.Contains(intent.TargetPublicKeyHex))
                     return PolicyDecision.Deny("Refused: recipient is not on the allowlist.");
-                var perDayMotes = (BigInteger)(policy.PerDayCspr) * MotesPerCspr;
+                var perDayMotes = (BigInteger)(policy.PerDayCspr * 1_000_000_000m);
                 if (ledger.TodaySpentMotes(signerPublicKeyHex) + intent.AmountMotes > perDayMotes)
                     return PolicyDecision.Deny($"Refused: would exceed the daily cap of {policy.PerDayCspr} CSPR.");
                 return PolicyDecision.Allow();
