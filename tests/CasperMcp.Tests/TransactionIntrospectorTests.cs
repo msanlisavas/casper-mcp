@@ -63,4 +63,16 @@ public class TransactionIntrospectorTests
     {
         Assert.Throws<TransactionDecodeException>(() => TransactionIntrospector.FromUnsignedJson("not json"));
     }
+
+    [Fact]
+    public void Rejects_Transfer_To_AccountHash_Target_Cleanly()
+    {
+        // v1 supports public-key recipients only. An account-hash transfer target must fail closed as
+        // a clean TransactionDecodeException (not a raw exception), so the signer refuses gracefully.
+        var from = KeyPair.CreateNew(KeyAlgo.ED25519).PublicKey;
+        var json = JsonSerializer.Serialize(new Transaction.NativeTransferBuilder()
+            .From(from).Target(new AccountHashKey(from.GetAccountHash())).Amount(1_000_000_000UL)
+            .ChainName("casper-test").Payment(100_000_000UL, (byte)1).Build());
+        Assert.Throws<TransactionDecodeException>(() => TransactionIntrospector.FromUnsignedJson(json));
+    }
 }

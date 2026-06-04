@@ -43,26 +43,36 @@ public static class TransactionIntrospector
 
         Transaction txn;
         try { txn = JsonSerializer.Deserialize<Transaction>(json) ?? throw new TransactionDecodeException("null transaction"); }
+        catch (TransactionDecodeException) { throw; }
         catch (Exception ex) { throw new TransactionDecodeException($"Could not deserialize transaction: {ex.Message}"); }
 
-        var sender = txn.InitiatorAddr?.PublicKey?.ToString()?.ToLowerInvariant()
-                     ?? throw new TransactionDecodeException("Missing initiator public key.");
-        var chain = txn.ChainName ?? throw new TransactionDecodeException("Missing chain name.");
-
-        var amount = (txn.Invocation.GetRuntimeArgValue("amount")
-                      ?? throw new TransactionDecodeException("Missing 'amount' arg.")).ToBigInteger();
-
-        string targetHex;
-        string? newValidatorHex = null;
-        if (kind == WriteKind.Transfer)
-            targetHex = Hex(txn, "target");
-        else
+        // Extract the typed fields we sign against. Wrap so ANY extraction failure (e.g. an
+        // out-of-scope account-hash transfer target hitting ToPublicKey, a missing/!PublicKey arg)
+        // fails closed as a clean TransactionDecodeException rather than a raw exception — the signer
+        // turns that into a graceful refusal instead of an unhandled error.
+        try
         {
-            targetHex = Hex(txn, "validator");
-            if (kind == WriteKind.Redelegate) newValidatorHex = Hex(txn, "new_validator");
-        }
+            var sender = txn.InitiatorAddr?.PublicKey?.ToString()?.ToLowerInvariant()
+                         ?? throw new TransactionDecodeException("Missing initiator public key.");
+            var chain = txn.ChainName ?? throw new TransactionDecodeException("Missing chain name.");
 
-        return new TransactionIntent(kind, sender, targetHex, newValidatorHex, amount, chain);
+            var amount = (txn.Invocation.GetRuntimeArgValue("amount")
+                          ?? throw new TransactionDecodeException("Missing 'amount' arg.")).ToBigInteger();
+
+            string targetHex;
+            string? newValidatorHex = null;
+            if (kind == WriteKind.Transfer)
+                targetHex = Hex(txn, "target");
+            else
+            {
+                targetHex = Hex(txn, "validator");
+                if (kind == WriteKind.Redelegate) newValidatorHex = Hex(txn, "new_validator");
+            }
+
+            return new TransactionIntent(kind, sender, targetHex, newValidatorHex, amount, chain);
+        }
+        catch (TransactionDecodeException) { throw; }
+        catch (Exception ex) { throw new TransactionDecodeException($"Unsupported or malformed transaction arguments: {ex.Message}"); }
     }
 
     private static string Hex(Transaction txn, string arg)
