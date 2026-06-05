@@ -823,7 +823,8 @@ casper-mcp/
 │   ├── Middleware/        # HTTP middleware (per-agent key check, apikey auth)
 │   ├── Observability/     # OpenTelemetry wiring, tool telemetry, key fingerprint
 │   ├── Remote/            # Per-request client factory, header parsing, error mapping, tool filter
-│   ├── Tools/             # MCP tool implementations (82 tools)
+│   ├── Tools/             # MCP tool implementations (82 read + 5 stdio-only write)
+│   ├── Writes/            # Local signer: fail-closed policy engine, ledger, introspector, builder
 │   └── Program.cs         # Entry point, DI setup, dual transport
 ├── tests/CasperMcp.Tests/ # Unit + middleware + integration + HTTP-pipeline tests
 ├── observability/         # Ready-to-run Grafana (otel-lgtm) + .NET Aspire stacks

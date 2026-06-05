@@ -26,5 +26,9 @@ multi-tenant, **read-only**).
 
 ## When adding write capability
 - Keep the tool surface small. Prefer a generic path over one tool per operation.
-- Any new write tool MUST go through `CasperSigner`/`PolicyEngine`, carry destructive hints, and be
-  excluded from http. Add a policy-engine unit test for every new rule.
+- Any new write tool MUST go through `CasperSigner`/`PolicyEngine` and be excluded from the HTTP
+  surface (no `[McpServerToolType]`; register it in the stdio-write branch). Add a policy-engine
+  unit test for every new rule.
+- Safety is **code-enforced** in the policy engine, never via tool annotations. (The pinned MCP
+  SDK's `[McpServerTool]` carries no destructive/read-only hint args here, and they would be
+  advisory only regardless — do not rely on them.)
