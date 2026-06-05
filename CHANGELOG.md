@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Writes are **stdio-only**; the remote HTTP surface stays strictly read-only (enforced by
   registration + a regression test). The private key never leaves the local process and its
   signature is never returned to the agent. See the README threat model for mainnet guidance.
+- Node submission errors (e.g. a sub-minimum transfer amount, insufficient balance) are surfaced as
+  graceful, audited messages carrying the node's reason — a rejected submit never crashes the signer
+  and never debits the spend ledger. Verified end-to-end on live testnet.
 
 ## [3.0.1] - 2026-06-02
 

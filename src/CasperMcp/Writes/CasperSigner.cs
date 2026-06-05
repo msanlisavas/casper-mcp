@@ -62,8 +62,22 @@ public sealed class CasperSigner
         }
 
         var txn = JsonSerializer.Deserialize<Transaction>(unsignedJson)!;
-        txn.Sign(_keyPair);
-        var submitResult = await _submit(txn);
+        string submitResult;
+        try
+        {
+            txn.Sign(_keyPair);
+            submitResult = await _submit(txn);
+        }
+        catch (Exception ex)
+        {
+            // The transaction passed policy and was signed locally, but the node did not accept it
+            // (e.g. a sub-minimum transfer amount, insufficient balance, or a transient node error).
+            // Surface the node's reason as a graceful, agent-readable message instead of throwing.
+            // No ledger debit — nothing was committed on-chain.
+            _audit.Record("SignAndSubmitTransaction", "error", ex.Message, summary, _fingerprint, correlationId);
+            return $"Submission failed — the transaction passed policy and was signed locally, but the " +
+                   $"node did not accept it: {ex.Message}";
+        }
 
         if (intent.Kind == WriteKind.Transfer) _ledger.Record(_signerPkHex, intent.AmountMotes);
         _audit.Record("SignAndSubmitTransaction", "allow", "ok", summary, _fingerprint, correlationId);

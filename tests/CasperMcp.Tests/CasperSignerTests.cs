@@ -70,4 +70,25 @@ public class CasperSignerTests
         Assert.Empty(submitted);
         Assert.Contains("could not", result, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public async Task Node_Rejection_Returns_Graceful_Error_And_Does_Not_Debit_Ledger()
+    {
+        // A policy-valid, locally-signed tx that the node refuses (e.g. sub-minimum transfer amount)
+        // must surface as a graceful message — not a thrown exception — and must not debit the ledger.
+        var recipient = KeyPair.CreateNew(KeyAlgo.ED25519).PublicKey.ToString();
+        var kp = KeyPair.CreateNew(KeyAlgo.ED25519);
+        var ledger = new InMemorySpendLedger(() => new DateOnly(2026, 6, 4));
+        var auditPath = Path.Combine(Path.GetTempPath(), "audit-" + Guid.NewGuid().ToString("n") + ".log");
+        var audit = new WriteAuditLog(auditPath, () => new DateTime(2026, 6, 4, 0, 0, 0, DateTimeKind.Utc));
+        var signer = new CasperSigner(kp, "casper-test", AllowTo(recipient), ledger, audit,
+            submit: _ => throw new InvalidOperationException("insufficient transfer amount"));
+        var (json, _) = signer.BuildTransfer(recipient, 10m);
+
+        var result = await signer.SignAndSubmit(json, "corr-err");
+
+        Assert.Contains("Submission failed", result, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("insufficient transfer amount", result);
+        Assert.True(ledger.TodaySpentMotes(kp.PublicKey.ToString().ToLowerInvariant()) == 0); // not debited
+    }
 }
