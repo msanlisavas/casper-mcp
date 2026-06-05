@@ -12,9 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `BuildDelegateTransaction`, `BuildUndelegateTransaction`, `BuildRedelegateTransaction`,
   `SignAndSubmitTransaction` — for native CSPR transfers and staking, built on `Casper.Network.SDK`
   3.2.0 (`TransactionV1` / `account_put_transaction`).
-- **Local fail-closed policy engine:** recipient/validator allowlists, per-tx and daily caps,
-  testnet-default with explicit mainnet opt-in, sender check, byte-level validation, and an
-  append-only audit log + spend ledger.
+- **Local fail-closed policy engine:** recipient/validator allowlists; **separate transfer caps
+  (per-tx + daily) and an independent stake per-tx cap** so staking large amounts never loosens the
+  transfer guardrail; undelegate is uncapped (returns your own funds); delegate/redelegate gate the
+  validator that *receives* the stake; testnet-default with explicit mainnet opt-in; sender check;
+  byte-level validation; append-only audit log + spend ledger.
 - `--enable-writes`, `--key-path`, `--key-algo`, `--policy-path`, `--node-rpc-url` flags (+ env).
 - Self-contained single-file release binaries (win-x64 / osx-arm64 / linux-x64).
 

@@ -14,15 +14,21 @@ public class PolicyEngineTests
         new(WriteKind.Transfer, Signer, to, null, motes, chain);
     private static TransactionIntent Delegate(BigInteger motes, string val = ValPk) =>
         new(WriteKind.Delegate, Signer, val, null, motes, "casper-test");
+    private static TransactionIntent Undelegate(BigInteger motes, string val) =>
+        new(WriteKind.Undelegate, Signer, val, null, motes, "casper-test");
+    private static TransactionIntent Redelegate(BigInteger motes, string fromVal, string toVal) =>
+        new(WriteKind.Redelegate, Signer, fromVal, toVal, motes, "casper-test");
 
-    private static WritePolicy Policy(bool mainnet = false, decimal perTx = 100, decimal perDay = 500,
-        string[]? recips = null, string[]? vals = null) =>
-        new(mainnet, perTx, perDay,
+    private static WritePolicy Policy(bool mainnet = false, decimal transferPerTx = 100, decimal transferPerDay = 500,
+        decimal stakePerTx = 100, string[]? recips = null, string[]? vals = null) =>
+        new(mainnet, transferPerTx, transferPerDay, stakePerTx,
             new HashSet<string>(recips ?? new[] { RecipPk }, StringComparer.OrdinalIgnoreCase),
             new HashSet<string>(vals ?? new[] { ValPk }, StringComparer.OrdinalIgnoreCase));
 
     private static PolicyDecision Eval(TransactionIntent i, WritePolicy p, ISpendLedger? led = null) =>
         PolicyEngine.Evaluate(i, p, led ?? new InMemorySpendLedger(() => new DateOnly(2026, 6, 4)), Signer);
+
+    // ---- Transfers: recipient allowlist + tight transfer caps ----
 
     [Fact] public void Allows_Transfer_To_Allowlisted_Recipient_Within_Caps() =>
         Assert.True(Eval(Transfer(10 * Cspr), Policy()).Allowed);
@@ -34,21 +40,33 @@ public class PolicyEngineTests
         Assert.Contains("allowlist", d.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact] public void Blocks_When_Over_PerTx_Cap()
+    [Fact] public void Blocks_Transfer_Over_Transfer_PerTx_Cap()
     {
-        var d = Eval(Transfer(101 * Cspr), Policy(perTx: 100));
+        var d = Eval(Transfer(101 * Cspr), Policy(transferPerTx: 100));
         Assert.False(d.Allowed);
         Assert.Contains("per-transaction", d.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact] public void Blocks_When_Over_Daily_Cap_With_Prior_Spend()
+    [Fact] public void Blocks_Over_Daily_Cap_With_Prior_Spend()
     {
         var led = new InMemorySpendLedger(() => new DateOnly(2026, 6, 4));
         led.Record(Signer, 450 * Cspr);
-        var d = Eval(Transfer(60 * Cspr), Policy(perTx: 100, perDay: 500), led); // 450+60 > 500
+        var d = Eval(Transfer(60 * Cspr), Policy(transferPerTx: 100, transferPerDay: 500), led); // 450+60 > 500
         Assert.False(d.Allowed);
         Assert.Contains("daily", d.Reason, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact] public void Empty_Recipient_Allowlist_Blocks_All_Transfers() =>
+        Assert.False(Eval(Transfer(1 * Cspr), Policy(recips: Array.Empty<string>())).Allowed);
+
+    [Fact] public void Fractional_Transfer_Cap_Is_Not_Truncated()
+    {
+        var p = Policy(transferPerTx: 2.5m, transferPerDay: 100m);
+        Assert.True(Eval(Transfer(new BigInteger(2_500_000_000)), p).Allowed);   // 2.5 CSPR ok
+        Assert.False(Eval(Transfer(new BigInteger(2_600_000_000)), p).Allowed);  // 2.6 CSPR blocked
+    }
+
+    // ---- Global gates ----
 
     [Fact] public void Blocks_Mainnet_When_Disabled()
     {
@@ -65,6 +83,8 @@ public class PolicyEngineTests
         Assert.Contains("sender", d.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
+    // ---- Staking: validator allowlist + a SEPARATE stake cap (decoupled from transfers) ----
+
     [Fact] public void Allows_Delegate_To_Allowlisted_Validator() =>
         Assert.True(Eval(Delegate(50 * Cspr), Policy()).Allowed);
 
@@ -75,26 +95,53 @@ public class PolicyEngineTests
         Assert.Contains("validator", d.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact] public void Staking_Does_Not_Consume_Daily_Cap()
+    [Fact] public void Blocks_Delegate_Over_Stake_Cap()
+    {
+        var d = Eval(Delegate(200 * Cspr), Policy(stakePerTx: 100));
+        Assert.False(d.Allowed);
+        Assert.Contains("stake", d.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact] public void Stake_Cap_Is_Independent_From_Transfer_Cap()
+    {
+        // The whole point: a tight transfer cap, a large stake cap. A 500-CSPR delegate is allowed
+        // while a 50-CSPR transfer is blocked — without loosening the transfer guardrail.
+        var p = Policy(transferPerTx: 10, transferPerDay: 10, stakePerTx: 1000);
+        Assert.True(Eval(Delegate(500 * Cspr), p).Allowed);
+        Assert.False(Eval(Transfer(50 * Cspr), p).Allowed);
+    }
+
+    [Fact] public void Staking_Does_Not_Consume_Daily_Transfer_Cap()
     {
         var led = new InMemorySpendLedger(() => new DateOnly(2026, 6, 4));
         led.Record(Signer, 480 * Cspr);
-        // delegate of 50 would exceed daily if counted; it must NOT be (still ≤ per-tx 100)
-        Assert.True(Eval(Delegate(50 * Cspr), Policy(perTx: 100, perDay: 500), led).Allowed);
+        // a 50 delegate would exceed the transfer daily cap if it counted; it must not (≤ stake cap 100)
+        Assert.True(Eval(Delegate(50 * Cspr), Policy(transferPerTx: 100, transferPerDay: 500, stakePerTx: 100), led).Allowed);
     }
 
-    [Fact] public void Empty_Allowlist_Blocks_All()
+    // ---- Undelegate: pure recovery of your own funds — uncapped, not allowlist-gated ----
+
+    [Fact] public void Undelegate_Is_Uncapped_And_Not_Validator_Allowlist_Gated()
     {
-        var d = Eval(Transfer(1 * Cspr), Policy(recips: Array.Empty<string>()));
+        // Huge amount, from a validator NOT on the allowlist → still allowed (returns your own funds).
+        var p = Policy(stakePerTx: 1, vals: Array.Empty<string>());
+        Assert.True(Eval(Undelegate(5_000_000 * Cspr, val: "01delisted"), p).Allowed);
+    }
+
+    // ---- Redelegate: gate the DESTINATION (where stake lands) ----
+
+    [Fact] public void Redelegate_Allows_To_Allowlisted_Destination_From_Any_Source()
+    {
+        // Source not on the allowlist, destination is → allowed (you may move stake to a trusted validator).
+        var p = Policy(stakePerTx: 1000, vals: new[] { "01dest" });
+        Assert.True(Eval(Redelegate(500 * Cspr, fromVal: "01anysource", toVal: "01dest"), p).Allowed);
+    }
+
+    [Fact] public void Redelegate_Blocks_NonAllowlisted_Destination()
+    {
+        var p = Policy(stakePerTx: 1000, vals: new[] { "01dest" });
+        var d = Eval(Redelegate(500 * Cspr, fromVal: "01dest", toVal: "01rogue"), p);
         Assert.False(d.Allowed);
-    }
-
-    [Fact]
-    public void Fractional_PerTx_Cap_Is_Not_Truncated()
-    {
-        // 2.5 CSPR cap must allow exactly 2.5 CSPR and block 2.6 CSPR.
-        var p = Policy(perTx: 2.5m, perDay: 100m);
-        Assert.True(Eval(Transfer(new BigInteger(2_500_000_000)), p).Allowed);   // 2.5 CSPR ok
-        Assert.False(Eval(Transfer(new BigInteger(2_600_000_000)), p).Allowed);  // 2.6 CSPR blocked
+        Assert.Contains("destination", d.Reason, StringComparison.OrdinalIgnoreCase);
     }
 }

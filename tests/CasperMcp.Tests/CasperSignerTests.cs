@@ -20,7 +20,7 @@ public class CasperSignerTests
     }
 
     private static WritePolicy AllowTo(string recipientHex) =>
-        new(false, 100m, 500m, new HashSet<string>(new[] { recipientHex.ToLowerInvariant() }, StringComparer.OrdinalIgnoreCase),
+        new(false, 100m, 500m, 100m, new HashSet<string>(new[] { recipientHex.ToLowerInvariant() }, StringComparer.OrdinalIgnoreCase),
             new HashSet<string>(StringComparer.OrdinalIgnoreCase));
 
     [Fact]

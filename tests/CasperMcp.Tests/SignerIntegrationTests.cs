@@ -9,7 +9,7 @@ public class SignerIntegrationTests
 {
     private static string? SignerPem => Environment.GetEnvironmentVariable("CASPER_MCP_TEST_SIGNER_PEM");
     private static readonly string NodeUrl =
-        Environment.GetEnvironmentVariable("CASPER_MCP_TEST_NODE_URL") ?? "https://node.testnet.cspr.cloud/rpc";
+        Environment.GetEnvironmentVariable("CASPER_MCP_TEST_NODE_URL") ?? "https://node.testnet.casper.network/rpc";
 
     private static CasperSigner BuildSigner(KeyPair kp, WritePolicy policy, out List<Transaction> submitted)
     {
@@ -27,7 +27,7 @@ public class SignerIntegrationTests
         // No funds required: prove build→policy→sign works against a fresh key (submit is captured).
         var kp = KeyPair.CreateNew(KeyAlgo.ED25519);
         var recipient = KeyPair.CreateNew(KeyAlgo.ED25519).PublicKey.ToString();
-        var policy = new WritePolicy(false, 100m, 500m,
+        var policy = new WritePolicy(false, 100m, 500m, 100m,
             new HashSet<string>(new[] { recipient.ToLowerInvariant() }, StringComparer.OrdinalIgnoreCase),
             new HashSet<string>(StringComparer.OrdinalIgnoreCase));
         var signer = BuildSigner(kp, policy, out var submitted);
@@ -47,7 +47,7 @@ public class SignerIntegrationTests
 
         var kp = KeyPair.FromPem(SignerPem!);
         var recipient = kp.PublicKey.ToString(); // self-transfer keeps funds; still a real on-chain tx
-        var policy = new WritePolicy(false, 100m, 500m,
+        var policy = new WritePolicy(false, 100m, 500m, 100m,
             new HashSet<string>(new[] { recipient.ToLowerInvariant() }, StringComparer.OrdinalIgnoreCase),
             new HashSet<string>(StringComparer.OrdinalIgnoreCase));
 
@@ -61,7 +61,7 @@ public class SignerIntegrationTests
             new InMemorySpendLedger(() => DateOnly.FromDateTime(DateTime.UtcNow)), audit,
             submit: async txn => { await client.PutTransaction(txn); return txn.Hash; });
 
-        var (json, _) = signer.BuildTransfer(recipient, 1m);
+        var (json, _) = signer.BuildTransfer(recipient, 3m); // >= 2.5 CSPR native-transfer minimum
         var result = await signer.SignAndSubmit(json, "it-real");
         Assert.Contains("submitted", result, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Refused", result);
@@ -72,7 +72,7 @@ public class SignerIntegrationTests
     {
         var kp = KeyPair.CreateNew(KeyAlgo.ED25519);
         var recipient = KeyPair.CreateNew(KeyAlgo.ED25519).PublicKey.ToString();
-        var policy = new WritePolicy(false, 10m, 50m,
+        var policy = new WritePolicy(false, 10m, 50m, 10m,
             new HashSet<string>(new[] { recipient.ToLowerInvariant() }, StringComparer.OrdinalIgnoreCase),
             new HashSet<string>(StringComparer.OrdinalIgnoreCase));
         var signer = BuildSigner(kp, policy, out var submitted);

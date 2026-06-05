@@ -716,8 +716,9 @@ agent = Agent(
          "command": "casper-mcp",
          "args": ["--enable-writes", "--key-path", "/home/me/.casper/secret_key.pem", "--network", "testnet"],
          "env": {
-           "CASPER_MCP_PER_TX_CSPR": "100",
-           "CASPER_MCP_PER_DAY_CSPR": "500",
+           "CASPER_MCP_TRANSFER_PER_TX_CSPR": "100",
+           "CASPER_MCP_TRANSFER_PER_DAY_CSPR": "500",
+           "CASPER_MCP_STAKE_PER_TX_CSPR": "100",
            "CASPER_MCP_ALLOW_RECIPIENTS": "01<allowed-recipient-pubkey>",
            "CASPER_MCP_ALLOW_VALIDATORS": "01<allowed-validator-pubkey>"
          }
@@ -731,9 +732,13 @@ agent = Agent(
 
 #### Guardrails (enforced locally, in code — not by the agent)
 
-- **Allowlists:** transfers only to allowlisted recipients; (re)delegations only to allowlisted
-  validators. An **empty allowlist blocks everything**.
-- **Caps:** per-transaction and per-day (CSPR), enforced against a local spend ledger.
+- **Allowlists:** transfers only to allowlisted recipients; delegate/redelegate only to the
+  allowlisted validator that *receives* the stake. An **empty allowlist blocks everything**.
+  Undelegate (recovering your own staked funds) is not allowlist-gated.
+- **Separate caps — transfers vs staking:** transfers get a tight per-tx + daily cap (real,
+  irreversible outflow, tracked in a local spend ledger); staking gets its **own independent**
+  per-tx cap, so you can stake large amounts **without** loosening the transfer guardrail.
+  Undelegate is uncapped (it just returns your funds).
 - **Testnet by default.** Mainnet requires `CASPER_MCP_MAINNET_ENABLED=true` **and** a populated
   allowlist — set deliberately, locally.
 - **Validate-the-bytes:** the signer decodes the real transaction and checks *those* fields; it

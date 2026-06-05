@@ -102,12 +102,16 @@
         "description": "Allow mainnet writes (default false → testnet only).",
         "type": "string"
       },
-      "CASPER_MCP_PER_TX_CSPR": {
-        "description": "Per-transaction cap in CSPR (default 100).",
+      "CASPER_MCP_TRANSFER_PER_TX_CSPR": {
+        "description": "Per-transaction TRANSFER cap in CSPR (default 100). Legacy alias: CASPER_MCP_PER_TX_CSPR.",
         "type": "string"
       },
-      "CASPER_MCP_PER_DAY_CSPR": {
-        "description": "Daily transfer cap in CSPR (default 500).",
+      "CASPER_MCP_TRANSFER_PER_DAY_CSPR": {
+        "description": "Daily TRANSFER cap in CSPR (default 500). Legacy alias: CASPER_MCP_PER_DAY_CSPR.",
+        "type": "string"
+      },
+      "CASPER_MCP_STAKE_PER_TX_CSPR": {
+        "description": "Per-transaction STAKE cap in CSPR (default 100), independent of the transfer caps — raise this alone to delegate large amounts. Undelegate is uncapped.",
         "type": "string"
       },
       "CASPER_MCP_ALLOW_RECIPIENTS": {
