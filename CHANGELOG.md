@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--enable-writes`, `--key-path`, `--key-algo`, `--policy-path`, `--node-rpc-url` flags (+ env).
 - Self-contained single-file release binaries (win-x64 / osx-arm64 / linux-x64).
 
+### Changed
+- The missing `X-CSPR-Cloud-Api-Key` error now links the CSPR.cloud setup docs
+  (https://docs.cspr.cloud/agentic-tools/mcp-server) so an agent can walk the user through configuring
+  and restarting their MCP client.
+
 ### Security
 - Writes are **stdio-only**; the remote HTTP surface stays strictly read-only (enforced by
   registration + a regression test). The private key never leaves the local process and its

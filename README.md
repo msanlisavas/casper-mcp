@@ -758,6 +758,30 @@ agent = Agent(
 > 500 CSPR can lose at most 500 CSPR. **Never autonomously sign with a high-value mainnet key on
 > the agent's own machine.**
 
+#### Running the signer safely — checklist
+
+Recommended setup for an autonomous signer, in order of importance:
+
+1. **Low-balance hot account.** Fund the signing key with only what you'd accept losing; keep your
+   treasury in a separate cold/multisig account that never touches the agent's machine. This is the
+   one limit that holds even if every software guard is bypassed.
+2. **Testnet first.** Run on testnet (the default) until you trust the setup. Mainnet needs a
+   deliberate `CASPER_MCP_MAINNET_ENABLED=true` **and** a populated allowlist.
+3. **Isolate the signer from the agent.** Run it in its own Docker container, or under a separate OS
+   user that owns `~/.casper-mcp/` (`chmod 600` on the key + policy), so the agent can't read the key
+   or edit the policy even with shell access:
+
+   ```bash
+   docker run -i --rm -v ~/.casper-mcp:/data ghcr.io/msanlisavas/casper-mcp \
+     --enable-writes --key-path /data/secret_key.pem --network testnet
+   ```
+4. **Tight allowlists + caps.** Allowlist only the recipients/validators you actually use. Keep the
+   transfer caps low; raise the **separate** stake cap only as high as you need. Empty allowlist = nothing moves.
+5. **Key as a file, never an env var.** Secrets in env leak into process listings and client configs;
+   the (non-secret) policy can live in `env` or `~/.casper-mcp/policy.json`.
+6. **Watch the audit log.** Every build / sign / refuse is appended to `~/.casper-mcp/audit.log` with a
+   timestamp, decoded summary, decision, and key fingerprint.
+
 > **Note:** The 10 `Watch*` WebSocket streaming tools (`WatchBlocks`, `WatchDeploys`, etc.) were removed in v3.0.0. Use polling with the request/response tools above instead (e.g. call `GetDeploy` repeatedly to wait for transaction confirmation).
 
 ## Development
