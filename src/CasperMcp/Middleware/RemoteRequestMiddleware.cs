@@ -38,7 +38,7 @@ public class RemoteRequestMiddleware
         if (!RemoteHeaders.TryGetCsprKey(context.Request.Headers, out _))
         {
             await Fail(context, isMcp, HttpStatusCode.Unauthorized, JsonRpc.InvalidRequest,
-                $"Missing {RemoteHeaders.CsprKeyHeader} header. Set the CSPR_CLOUD_API_KEY environment variable to your CSPR.cloud API key, configure your MCP client to map CSPR_CLOUD_API_KEY to the {RemoteHeaders.CsprKeyHeader} header, then restart the client so it can pick up the new environment variable.");
+                $"Missing {RemoteHeaders.CsprKeyHeader} header. Set the CSPR_CLOUD_API_KEY environment variable to your CSPR.cloud API key, configure your MCP client to send it as the {RemoteHeaders.CsprKeyHeader} header, then restart the client so it can pick up the new environment variable. See setup instructions: https://docs.cspr.cloud/agentic-tools/mcp-server");
             return;
         }
 

@@ -90,6 +90,8 @@ public class RemoteRequestMiddlewareTests
         Assert.Contains("X-CSPR-Cloud-Api-Key", message);
         Assert.Contains("CSPR_CLOUD_API_KEY", message);
         Assert.Contains("environment variable", message, StringComparison.OrdinalIgnoreCase);
+        // ...and points the user at the CSPR.cloud setup docs.
+        Assert.Contains("https://docs.cspr.cloud/agentic-tools/mcp-server", message);
         Assert.Equal(42, root.GetProperty("id").GetInt32());
     }
 
