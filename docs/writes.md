@@ -98,7 +98,7 @@ casper-client keygen <output-dir>
 casper-client keygen --algorithm secp256k1 <output-dir>
 ```
 
-Both commands produce `secret_key.pem` in the output directory. `KeyPair.FromPem` auto-detects the algorithm, so either PEM works with `--key-path`. There is no `--key-algo` flag in casper-mcp itself. Run `casper-client keygen --help` to confirm the exact option for your client version.
+Both commands produce `secret_key.pem` in the output directory. `KeyPair.FromPem` auto-detects the algorithm from the key file, so either PEM works with `--key-path` and you never need to tell the signer which algorithm to use. Run `casper-client keygen --help` to confirm the exact option for your client version.
 
 Lock down the file immediately:
 
