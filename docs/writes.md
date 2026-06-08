@@ -17,7 +17,7 @@ Local stdio signer that lets an AI agent build, preview, and submit Casper Netwo
 9. [Docker isolation](#9-docker-isolation)
 10. [Audit log](#10-audit-log)
 11. [Spend ledger and daily cap](#11-spend-ledger-and-daily-cap)
-12. [Policy reference](#12-policy-reference)
+12. [Key management and node endpoint](#12-key-management-and-node-endpoint)
 13. [Troubleshooting](#13-troubleshooting)
 
 ---
@@ -66,7 +66,7 @@ Transfers and staking have independent limits. A transfer is irreversible outflo
 
 ### Audit log
 
-Every build, sign, and refusal is appended to `~/.casper-mcp/audit.log` with a timestamp, a decoded transaction summary, the policy decision, and the key fingerprint. The secret key itself is never written.
+Every sign attempt from `SignAndSubmitTransaction` is appended to `~/.casper-mcp/audit.log` with a timestamp, a decoded transaction summary, the policy decision (`allow`, `deny`, or `error`), and the key fingerprint. `Build*` calls are not logged. The secret key itself is never written.
 
 ### Anti-SSRF
 
@@ -333,7 +333,7 @@ Corresponding `policy.json`:
 **Safe-run checklist before first mainnet transaction:**
 
 - [ ] Banner shows `network=mainnet` and the expected key prefix.
-- [ ] `policy.json` has `mainnet_enabled: true`.
+- [ ] `policy.json` has `"mainnet_enabled": true`.
 - [ ] Allowlists are populated with verified mainnet keys.
 - [ ] Transfer and daily caps are set conservatively.
 - [ ] Hot account holds only the minimum balance needed for the operation.
@@ -347,7 +347,7 @@ Running the signer in its own Docker container (or under a separate OS user) lim
 
 ### Filesystem isolation
 
-Keep the key and policy in a dedicated directory owned by a non-agent user:
+Keep the key and policy in a dedicated directory and tighten permissions:
 
 ```bash
 mkdir -p ~/.casper-mcp
@@ -356,12 +356,16 @@ chmod 600 ~/.casper-mcp/secret_key.pem
 chmod 600 ~/.casper-mcp/policy.json
 ```
 
-With these permissions the agent process cannot read the key or overwrite the policy even if it has a shell as the same user — it needs explicit ownership or `sudo`.
+`chmod 600` on the key and policy and `chmod 700` on `~/.casper-mcp/` protect those files from **other OS users** on the machine. They do **not** protect against a process running as the same OS user that owns the files — that process can always read the key and edit the policy. This is the threat model noted in §2.
+
+For true isolation against an agent running as the same user, run the signer as a **separate OS user** (see the "Separate OS user" subsection below) or in its **own container** (see the Docker example). Treat `chmod` as defense-in-depth against other users on a shared machine, not as a boundary against the agent itself.
 
 ### Docker example
 
 ```bash
-docker run -i --rm -v ~/.casper-mcp:/data ghcr.io/msanlisavas/casper-mcp \
+docker run -i --rm \
+  -e CSPR_CLOUD_API_KEY=YOUR_API_KEY \
+  -v ~/.casper-mcp:/data ghcr.io/msanlisavas/casper-mcp \
   --enable-writes --key-path /data/secret_key.pem --network testnet
 ```
 
@@ -369,7 +373,7 @@ docker run -i --rm -v ~/.casper-mcp:/data ghcr.io/msanlisavas/casper-mcp \
 - `--rm` removes the container on exit, leaving no writable layer.
 - The host volume is mounted read-write only for the signer process; the agent communicates only over stdio.
 
-For mainnet add `--network mainnet` and ensure `/data/policy.json` has `mainnet_enabled: true`.
+For mainnet add `--network mainnet` and ensure `/data/policy.json` has `"mainnet_enabled": true`. The `-e CSPR_CLOUD_API_KEY=YOUR_API_KEY` flag is required in both cases.
 
 ### Separate OS user
 
@@ -379,7 +383,7 @@ Alternatively, create a dedicated system user (`casper-signer`) that owns `~/.ca
 
 ## 10. Audit log
 
-Every signer decision is appended to `~/.casper-mcp/audit.log` as JSONL (one JSON object per line). The file is created automatically on first run.
+Every sign attempt from `SignAndSubmitTransaction` — each `allow`, `deny` (refusal), or submission `error` — is appended to `~/.casper-mcp/audit.log` as JSONL (one JSON object per line). `Build*` calls are not logged. The file is created automatically on first run.
 
 ### Record format
 
@@ -422,7 +426,7 @@ File structure:
 
 ```json
 {
-  "date": "2025-06-08",
+  "date": "2026-06-08",
   "spent": {
     "01<signer-public-key-hex>": "<cumulative-motes>"
   }
@@ -447,7 +451,7 @@ To raise the cap, update `transfer.per_day_cspr` in `policy.json` (or `CASPER_MC
 
 ---
 
-## 12. Policy reference
+## 12. Key management and node endpoint
 
 ### Key fingerprint
 
@@ -510,6 +514,6 @@ The table below lists every message the signer can return, its cause, and the fi
 | Symptom | Likely cause |
 |---|---|
 | Every transfer refused even with correct recipient | `allowlist.recipients` is empty or the key hex doesn't match exactly (check case). |
-| Mainnet transactions refused on testnet | Tx was built for `casper` chain but signer is running `--network testnet`. |
+| Transaction refused even though you meant to use testnet | The transaction was built for the `casper` (mainnet) chain-id while the signer runs `--network testnet`. |
 | Daily cap hit unexpectedly | A prior test run counted real spend; check the ledger and reset if needed. |
 | Banner shows wrong network | Wrong `--network` flag; stop and restart with the correct network. |
