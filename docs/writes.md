@@ -26,7 +26,7 @@ Local stdio signer that lets an AI agent build, preview, and submit Casper Netwo
 
 The server is **read-only by default**. Writes are an opt-in local stdio signer enabled by `--enable-writes`. The remote `POST /mcp` HTTP surface never exposes write tools — it is read-only by construction and by regression test.
 
-The private key is loaded locally by the stdio process and never leaves the machine. Signatures are never returned to the agent — only a transaction hash and status.
+The private key is loaded locally by the stdio process and never leaves the machine.
 
 **Five write tools:**
 
@@ -95,10 +95,10 @@ Use the [Casper client](https://github.com/casper-ecosystem/casper-client-rs) to
 casper-client keygen <output-dir>
 
 # secp256k1
-casper-client keygen -a secp256k1 <output-dir>
+casper-client keygen --algorithm secp256k1 <output-dir>
 ```
 
-Both commands produce `secret_key.pem` in the output directory. `KeyPair.FromPem` auto-detects the algorithm, so either PEM works with `--key-path`. There is no `--key-algo` flag in casper-mcp itself.
+Both commands produce `secret_key.pem` in the output directory. `KeyPair.FromPem` auto-detects the algorithm, so either PEM works with `--key-path`. There is no `--key-algo` flag in casper-mcp itself. Run `casper-client keygen --help` to confirm the exact option for your client version.
 
 Lock down the file immediately:
 
@@ -112,11 +112,14 @@ chmod 600 secret_key.pem
 
 ## 5. Configuring the policy
 
-The policy controls what the signer will sign. It is loaded from the path given by `--policy-path` (default `~/.casper-mcp/policy.json`). Copy `policy.sample.json` from the repo root to start:
+The policy controls what the signer will sign. It is loaded from the path given by `--policy-path` (default `~/.casper-mcp/policy.json`). If you have a source checkout, copy the sample from the repo root:
 
 ```bash
+# Run from the repo root
 cp policy.sample.json ~/.casper-mcp/policy.json
 ```
+
+If you installed via `dotnet tool install -g CasperMcp` and don't have the source, create the file directly from the schema block below.
 
 ### Schema
 
@@ -145,7 +148,7 @@ cp policy.sample.json ~/.casper-mcp/policy.json
 
 ### Precedence
 
-Strict defaults are applied first, then the policy file overrides them, then environment variables override the file. The new environment variable names win over the legacy aliases when both are set.
+Strict defaults are applied first, then the policy file overrides them, then environment variables override the file. When both a current name and its legacy alias are set — for example `CASPER_MCP_TRANSFER_PER_TX_CSPR` and the legacy `CASPER_MCP_PER_TX_CSPR` — the current name takes precedence.
 
 ### Environment variable and CLI flag reference
 
@@ -155,7 +158,7 @@ Strict defaults are applied first, then the policy file overrides them, then env
 | `CASPER_MCP_KEY_PATH` | `--key-path` | — | (none) | PEM secret key path. Required with writes. |
 | `CASPER_MCP_POLICY_PATH` | `--policy-path` | — | `~/.casper-mcp/policy.json` | Write-policy file. |
 | `CASPER_MCP_NETWORK` | `--network` | — | testnet (in write mode) | `mainnet` or `testnet`. |
-| `CASPER_MCP_NODE_RPC_URL` | `--node-rpc-url` | — | pinned per network | Override the submission node. |
+| `CASPER_MCP_NODE_RPC_URL` | `--node-rpc-url` | — | pinned per network | Operator startup override only; the agent cannot change it at runtime. |
 | `CSPR_CLOUD_API_KEY` | `--api-key` | — | (none) | CSPR.Cloud key; required in stdio. |
 | `CASPER_MCP_MAINNET_ENABLED` | — | `mainnet_enabled` | `false` | `true`/`True`/`1` to allow mainnet. |
 | `CASPER_MCP_TRANSFER_PER_TX_CSPR` | — | `transfer.per_tx_cspr` | `100` | Legacy alias: `CASPER_MCP_PER_TX_CSPR`. |
@@ -174,13 +177,13 @@ Testnet is the safe default. The signer refuses mainnet transactions unless `mai
 
 ```bash
 # .NET global tool
-casper-mcp --enable-writes --key-path ~/.casper/secret_key.pem --network testnet
+casper-mcp --enable-writes --key-path ~/.casper/secret_key.pem --network testnet --api-key YOUR_API_KEY
 
 # Self-contained native binary (macOS/Linux)
-./CasperMcp --enable-writes --key-path ~/.casper/secret_key.pem --network testnet
+./CasperMcp --enable-writes --key-path ~/.casper/secret_key.pem --network testnet --api-key YOUR_API_KEY
 
 # Self-contained native binary (Windows)
-./CasperMcp.exe --enable-writes --key-path ~/.casper/secret_key.pem --network testnet
+./CasperMcp.exe --enable-writes --key-path ~/.casper/secret_key.pem --network testnet --api-key YOUR_API_KEY
 ```
 
 ### Startup banner
@@ -212,6 +215,7 @@ The recommended setup is two separate MCP servers: one remote read-only server f
         "--network", "testnet"
       ],
       "env": {
+        "CSPR_CLOUD_API_KEY": "YOUR_API_KEY",
         "CASPER_MCP_TRANSFER_PER_TX_CSPR": "100",
         "CASPER_MCP_TRANSFER_PER_DAY_CSPR": "500",
         "CASPER_MCP_STAKE_PER_TX_CSPR": "100",
@@ -288,4 +292,4 @@ The binding safety check is the signer's re-introspection of the actual transact
 
 ### After submission
 
-Use the read tools (`GetDeploy`, `GetDeploys`) to poll for on-chain execution confirmation. The transaction hash returned by `SignAndSubmitTransaction` is the deterministic hash set at build time.
+Take the transaction hash from the `SignAndSubmitTransaction` result and pass it to `GetDeploy` to check its execution status on-chain. The hash is deterministic — it is set at build time and returned again after submission.
