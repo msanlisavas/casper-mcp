@@ -687,100 +687,13 @@ agent = Agent(
 | `BuildRedelegateTransaction` | Build an UNSIGNED redelegation (move stake) |
 | `SignAndSubmitTransaction` | Validate against local policy, sign locally, and submit |
 
-#### Safe quick start (testnet, recommended)
+> ⚠️ **Use a low-balance hot account and start on testnet.** Never point the signer at a high-value
+> mainnet key. The signer is fail-closed — empty allowlists block everything — and writes are only
+> ever possible locally over stdio.
 
-1. **Use a low-balance hot account.** Fund a *fresh testnet* account with only what you'd accept
-   losing. **Never point the signer at a high-value mainnet key.**
-2. Start the signer locally (stdio):
-
-   ```bash
-   # .NET global tool
-   casper-mcp --enable-writes --key-path ~/.casper/secret_key.pem --network testnet
-
-   # Self-contained native binary (Windows)
-   ./CasperMcp.exe --enable-writes --key-path ~/.casper/secret_key.pem --network testnet
-
-   # Self-contained native binary (macOS/Linux) — you can rename CasperMcp to casper-mcp if preferred
-   ./CasperMcp --enable-writes --key-path ~/.casper/secret_key.pem --network testnet
-   ```
-3. Configure guardrails (testnet-only and strict by default). Example client config:
-
-   ```json
-   {
-     "mcpServers": {
-       "casper-read": {
-         "url": "https://mcp.testnet.cspr.cloud/mcp",
-         "headers": { "X-CSPR-Cloud-Api-Key": "${CSPR_CLOUD_API_KEY}" }
-       },
-       "casper-sign": {
-         "command": "casper-mcp",
-         "args": ["--enable-writes", "--key-path", "/home/me/.casper/secret_key.pem", "--network", "testnet"],
-         "env": {
-           "CASPER_MCP_TRANSFER_PER_TX_CSPR": "100",
-           "CASPER_MCP_TRANSFER_PER_DAY_CSPR": "500",
-           "CASPER_MCP_STAKE_PER_TX_CSPR": "100",
-           "CASPER_MCP_ALLOW_RECIPIENTS": "01<allowed-recipient-pubkey>",
-           "CASPER_MCP_ALLOW_VALIDATORS": "01<allowed-validator-pubkey>"
-         }
-       }
-     }
-   }
-   ```
-
-   The **key is always a file path** — never an environment variable. Policy values are non-secret
-   and live in `env` / `~/.casper-mcp/policy.json`.
-
-#### Guardrails (enforced locally, in code — not by the agent)
-
-- **Allowlists:** transfers only to allowlisted recipients; delegate/redelegate only to the
-  allowlisted validator that *receives* the stake. An **empty allowlist blocks everything**.
-  Undelegate (recovering your own staked funds) is not allowlist-gated.
-- **Separate caps — transfers vs staking:** transfers get a tight per-tx + daily cap (real,
-  irreversible outflow, tracked in a local spend ledger); staking gets its **own independent**
-  per-tx cap, so you can stake large amounts **without** loosening the transfer guardrail.
-  Undelegate is uncapped (it just returns your funds).
-- **Testnet by default.** Mainnet requires `CASPER_MCP_MAINNET_ENABLED=true` **and** a populated
-  allowlist — set deliberately, locally.
-- **Validate-the-bytes:** the signer decodes the real transaction and checks *those* fields; it
-  never trusts a description.
-- **Fail-closed:** missing/invalid policy ⇒ refuse; the signer refuses to start under http or
-  without a readable key.
-
-#### ⚠️ Mainnet & the honest threat model
-
-> Enabling mainnet signing on the same machine as an autonomous agent carries real risk. The
-> in-process guards stop a prompt-injected agent acting **through the MCP**, but they **cannot**
-> stop an agent that has general shell access *as the user that owns the key* — it could edit the
-> policy, restart with looser rules, or sign with the key directly. That is an OS-authorization
-> problem. Defend it with **isolation** (run the signer in its own Docker container or under a
-> separate OS user owning `~/.casper-mcp/` with `chmod 600`) and, above all, a **low-balance hot
-> account** — the one limit that holds even if every software guard is bypassed: an account holding
-> 500 CSPR can lose at most 500 CSPR. **Never autonomously sign with a high-value mainnet key on
-> the agent's own machine.**
-
-#### Running the signer safely — checklist
-
-Recommended setup for an autonomous signer, in order of importance:
-
-1. **Low-balance hot account.** Fund the signing key with only what you'd accept losing; keep your
-   treasury in a separate cold/multisig account that never touches the agent's machine. This is the
-   one limit that holds even if every software guard is bypassed.
-2. **Testnet first.** Run on testnet (the default) until you trust the setup. Mainnet needs a
-   deliberate `CASPER_MCP_MAINNET_ENABLED=true` **and** a populated allowlist.
-3. **Isolate the signer from the agent.** Run it in its own Docker container, or under a separate OS
-   user that owns `~/.casper-mcp/` (`chmod 600` on the key + policy), so the agent can't read the key
-   or edit the policy even with shell access:
-
-   ```bash
-   docker run -i --rm -v ~/.casper-mcp:/data ghcr.io/msanlisavas/casper-mcp \
-     --enable-writes --key-path /data/secret_key.pem --network testnet
-   ```
-4. **Tight allowlists + caps.** Allowlist only the recipients/validators you actually use. Keep the
-   transfer caps low; raise the **separate** stake cap only as high as you need. Empty allowlist = nothing moves.
-5. **Key as a file, never an env var.** Secrets in env leak into process listings and client configs;
-   the (non-secret) policy can live in `env` or `~/.casper-mcp/policy.json`.
-6. **Watch the audit log.** Every build / sign / refuse is appended to `~/.casper-mcp/audit.log` with a
-   timestamp, decoded summary, decision, and key fingerprint.
+**→ Full setup: see [docs/writes.md](docs/writes.md)** — key generation, policy configuration and the
+env-var reference, the build → preview → sign workflow, the mainnet runbook, isolation/hardening,
+the audit log, troubleshooting, and key rotation.
 
 > **Note:** The 10 `Watch*` WebSocket streaming tools (`WatchBlocks`, `WatchDeploys`, etc.) were removed in v3.0.0. Use polling with the request/response tools above instead (e.g. call `GetDeploy` repeatedly to wait for transaction confirmation).
 
