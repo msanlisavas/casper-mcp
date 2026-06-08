@@ -36,3 +36,4 @@ appsettings.Local.json
 .DS_Store
 Thumbs.db
 *.stackdump
+/docs/superpowers

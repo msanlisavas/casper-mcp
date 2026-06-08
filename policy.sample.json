@@ -1,0 +1,9 @@
+{
+  "mainnet_enabled": false,
+  "transfer": { "per_tx_cspr": 100, "per_day_cspr": 500 },
+  "stake": { "per_tx_cspr": 100 },
+  "allowlist": {
+    "recipients": ["01<allowed-recipient-public-key-hex>"],
+    "validators": ["01<allowed-validator-public-key-hex>"]
+  }
+}
