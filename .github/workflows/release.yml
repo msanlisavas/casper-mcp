@@ -35,7 +35,16 @@ jobs:
         -p:IncludeNativeLibrariesForSelfExtract=true
         -o publish/${{ matrix.rid }}
 
+    - name: Stage RID-tagged binary (${{ matrix.rid }})
+      run: |
+        mkdir -p dist
+        if [ "${{ matrix.rid }}" = "win-x64" ]; then
+          cp "publish/${{ matrix.rid }}/CasperMcp.exe" "dist/CasperMcp-${{ matrix.rid }}.exe"
+        else
+          cp "publish/${{ matrix.rid }}/CasperMcp" "dist/CasperMcp-${{ matrix.rid }}"
+        fi
+
     - name: Upload release assets
       uses: softprops/action-gh-release@v2
       with:
-        files: publish/${{ matrix.rid }}/CasperMcp*
+        files: dist/CasperMcp-${{ matrix.rid }}*
