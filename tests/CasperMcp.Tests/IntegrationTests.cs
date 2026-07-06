@@ -599,6 +599,26 @@ public class IntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetNft_WithDiscoveredToken_ReturnsDetails()
+    {
+        var endpoint = _options.IsTestnet ? (INetworkEndpoint)_client.Testnet : _client.Mainnet;
+        var nfts = await endpoint.NFT.GetNFTsAsync(new CSPR.Cloud.Net.Parameters.Wrapper.Nft.NFTsRequestParameters { PageSize = 1 });
+
+        if (nfts?.Data is null || nfts.Data.Count == 0 || string.IsNullOrEmpty(nfts.Data[0].ContractPackageHash) || string.IsNullOrEmpty(nfts.Data[0].TokenId))
+        {
+            Assert.True(true);
+            return;
+        }
+
+        var nft = nfts.Data[0];
+        var result = await NftTools.GetNft(_client, _options, nft.ContractPackageHash, nft.TokenId);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("NFT Details", result);
+        Assert.Contains(nft.TokenId, result);
+    }
+
+    [Fact]
     public async Task GetNftStandards_ReturnsData()
     {
         var result = await NftTools.GetNftStandards(_client, _options);

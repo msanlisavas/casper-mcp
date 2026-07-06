@@ -5,6 +5,7 @@ using CasperMcp.Helpers;
 using CSPR.Cloud.Net.Clients;
 using CSPR.Cloud.Net.Parameters.Wrapper.Nft;
 using ModelContextProtocol.Server;
+using Newtonsoft.Json;
 
 namespace CasperMcp.Tools;
 
@@ -162,6 +163,21 @@ public static class NftTools
         sb.AppendLine($"- **Block Height:** {nft.BlockHeight}");
         sb.AppendLine($"- **Timestamp:** {FormattingHelpers.FormatTimestamp(nft.Timestamp)}");
         sb.AppendLine($"- **Token Standard ID:** {nft.TokenStandardId}");
+        if (nft.OnchainMetadata is not null)
+        {
+            sb.AppendLine("- **Onchain Metadata:**");
+            sb.AppendLine("```json");
+            sb.AppendLine(JsonConvert.SerializeObject(nft.OnchainMetadata, Formatting.Indented));
+            sb.AppendLine("```");
+        }
+
+        if (nft.OffchainMetadata is not null)
+        {
+            sb.AppendLine("- **Offchain Metadata:**");
+            sb.AppendLine("```json");
+            sb.AppendLine(JsonConvert.SerializeObject(nft.OffchainMetadata, Formatting.Indented));
+            sb.AppendLine("```");
+        }
 
         return sb.ToString();
     }
