@@ -1,6 +1,6 @@
 {
   "name": "casper-mcp",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "MCP server for the Casper Network blockchain via CSPR.Cloud API",
   "repository": "https://github.com/msanlisavas/casper-mcp",
   "license": "MIT",

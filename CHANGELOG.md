@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-07-06
+
+### Added
+- **`GetNft` now returns token metadata.** The single-token detail response includes onchain and
+  offchain NFT metadata, rendered as indented JSON in fenced code blocks (each section is omitted
+  when the token carries no metadata of that kind).
+
 ## [3.1.0] - 2026-06-05
 
 ### Added
