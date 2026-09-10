@@ -10,6 +10,9 @@ COPY . .
 RUN dotnet publish src/CasperMcp/CasperMcp.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
+# The official MCP registry proves this image belongs to the server named in server.json by
+# reading this label, so it must equal server.json's "name".
+LABEL io.modelcontextprotocol.server.name="io.github.msanlisavas/casper-mcp"
 WORKDIR /app
 COPY --from=build /app/publish .
 
