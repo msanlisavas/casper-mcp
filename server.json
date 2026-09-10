@@ -24,9 +24,8 @@
         },
         {
           "name": "CASPER_MCP_NETWORK",
-          "description": "mainnet (default) or testnet.",
-          "isRequired": false,
-          "default": "mainnet"
+          "description": "mainnet or testnet; when unset, casper-mcp applies its own default.",
+          "isRequired": false
         }
       ]
     }
