@@ -14,14 +14,7 @@ Built with [CSPR.Cloud.Net](https://www.nuget.org/packages/CSPR.Cloud.Net) and t
 
 ## Quick Start
 
-### Option 1: .NET Global Tool (recommended)
-
-```bash
-dotnet tool install -g CasperMcp
-casper-mcp --api-key YOUR_API_KEY
-```
-
-### Option 2: Docker (no .NET required)
+### Option 1: Docker (recommended, no .NET required)
 
 ```bash
 # Pre-built image from GitHub Container Registry
@@ -32,6 +25,22 @@ docker run -i ghcr.io/msanlisavas/casper-mcp:latest --api-key YOUR_API_KEY
 docker build -t casper-mcp .
 docker run -i casper-mcp --api-key YOUR_API_KEY
 ```
+
+### Option 2: .NET global tool, packed from source
+
+CasperMcp is not published on NuGet, so `dotnet tool install -g CasperMcp` on its own fails. Pack it
+and install it from the package folder (needs the .NET 10 SDK):
+
+```bash
+git clone https://github.com/msanlisavas/casper-mcp.git
+cd casper-mcp
+dotnet pack src/CasperMcp -c Release -o nupkg
+dotnet tool install -g --add-source nupkg CasperMcp
+casper-mcp --api-key YOUR_API_KEY
+```
+
+The client configurations below run this `casper-mcp` command. With Docker, use the Docker
+alternative shown under Claude Desktop.
 
 ### Option 3: Build from source
 
@@ -723,8 +732,8 @@ CSPR_CLOUD_TESTNET_API_KEY=YOUR_KEY dotnet test
 ### Pack as global tool
 
 ```bash
-dotnet pack src/CasperMcp -c Release
-dotnet tool install -g --add-source src/CasperMcp/nupkg CasperMcp
+dotnet pack src/CasperMcp -c Release -o nupkg
+dotnet tool install -g --add-source nupkg CasperMcp
 ```
 
 ### CI/CD

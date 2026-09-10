@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   image for registry.modelcontextprotocol.io, and the image now carries the
   `io.modelcontextprotocol.server.name` label the registry verifies it by.
 
+### Fixed
+- **README install instructions.** The Quick Start no longer offers `dotnet tool install -g CasperMcp`:
+  the package is not published on NuGet, so that command failed. Docker now comes first, and the
+  global tool is packed from source with `dotnet pack -o nupkg`. That also fixes "Pack as global
+  tool", whose `src/CasperMcp/nupkg` folder never received the package (`dotnet pack` writes to
+  `bin/Release` unless given `-o`).
+
 ## [3.2.0] - 2026-07-06
 
 ### Added
