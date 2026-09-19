@@ -551,7 +551,7 @@ agent = Agent(
 > omitted unless requested. Before v3.3.0 no tool requested any of them, so those fields rendered
 > `N/A` — which reads as a real zero. `GetAccountBalance` reported one mainnet account's total as
 > 109 CSPR when it held 904,257,784 CSPR delegated. See the
-> [CHANGELOG](CHANGELOG.md#330---unreleased) for the full list.
+> [CHANGELOG](CHANGELOG.md#330---2026-09-19) for the full list.
 
 
 ### Account Tools
