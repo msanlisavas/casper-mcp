@@ -44,13 +44,21 @@ public static class BidderTools
 
         var parameters = new BidderRequestParameters();
         parameters.FilterParameters.EraId = resolvedEra;
+        // Names are optional properties: without these the response is a public key and nothing a
+        // human recognises, so "who is this bidder?" is unanswerable from the result.
+        parameters.OptionalParameters.AccountInfo = true;
+        parameters.OptionalParameters.CentralizedAccountInfo = true;
+        parameters.OptionalParameters.CsprName = true;
         var bidder = await endpoint.Bidder.GetBidderAsync(publicKey, parameters);
 
         if (bidder is null)
             return $"Bidder not found: {publicKey}";
 
         var sb = new StringBuilder();
+        var bidderName = NameHelpers.DisplayName(bidder.AccountInfo, bidder.CentralizedAccountInfo, bidder.CsprName);
         sb.AppendLine($"## Bidder Information");
+        if (bidderName is not null)
+            sb.AppendLine($"- **Name:** {bidderName}");
         sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(bidder.PublicKey)}");
         sb.AppendLine($"- **Rank:** #{bidder.Rank?.ToString() ?? "N/A"}");
         sb.AppendLine($"- **Active:** {FormattingHelpers.FormatBool(bidder.IsActive)}");
@@ -84,6 +92,11 @@ public static class BidderTools
             PageSize = Math.Min(pageSize, 250)
         };
         parameters.FilterParameters.EraId = resolvedEra;
+        // Names are optional properties: without these the list is 250 rows of public keys, and no
+        // caller can pick out the bidder they were asked about.
+        parameters.OptionalParameters.AccountInfo = true;
+        parameters.OptionalParameters.CentralizedAccountInfo = true;
+        parameters.OptionalParameters.CsprName = true;
 
         var result = await endpoint.Bidder.GetBiddersAsync(parameters);
 
@@ -95,8 +108,9 @@ public static class BidderTools
 
         foreach (var b in result.Data)
         {
+            var name = NameHelpers.DisplayName(b.AccountInfo, b.CentralizedAccountInfo, b.CsprName);
             sb.AppendLine($"---");
-            sb.AppendLine($"- **Rank #{b.Rank}** | **Active:** {FormattingHelpers.FormatBool(b.IsActive)}");
+            sb.AppendLine($"- **Rank #{b.Rank}**{(name is null ? "" : $" | **{name}**")} | **Active:** {FormattingHelpers.FormatBool(b.IsActive)}");
             sb.AppendLine($"  Public Key: {FormattingHelpers.FormatHash(b.PublicKey)}");
             sb.AppendLine($"  Fee: {b.Fee?.ToString() ?? "N/A"}% | Self Stake: {FormattingHelpers.MotesToCspr(b.SelfStake)}");
             sb.AppendLine($"  Total Stake: {FormattingHelpers.MotesToCspr(b.TotalStake)} | Network Share: {b.NetworkShare ?? "N/A"}");

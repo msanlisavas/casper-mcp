@@ -5,7 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.2.1] - Unreleased
+## [3.3.0] - Unreleased
+
+### Fixed
+
+- **Tools now request the optional data they print.** CSPR.cloud omits
+  [optional properties](https://docs.cspr.cloud/documentation/overview/optional-properties) unless a
+  request asks for them with `includes`; the SDK exposes this as the `OptionalParameters` flags on a
+  request-parameters object, all defaulting to `false`. No tool in this server had ever set one, so
+  every field that depends on optional data rendered `N/A` — indistinguishable from a genuine zero —
+  and every entity printed as a bare hash. 44 occurrences across 18 tool files, each confirmed
+  against the live API before fixing. The worst three:
+
+  - **`GetAccountBalance` understated totals by the entire staked and delegated position.** Both
+    components printed `N/A` and the line labelled *"Total (liquid + staked + delegated)"* silently
+    equalled the liquid balance alone. One mainnet account holding **904,257,784 CSPR delegated**
+    was reported as a total of **109.36 CSPR**.
+  - **`GetAccountInfo` reported no staking for accounts that were staking.** Staked, delegated,
+    undelegating and auction status were all `N/A`; an active validator with 57,794 CSPR staked
+    showed as having none.
+  - **`GetDeploy` could never render its transfers.** The whole `### Transfers (N)` section was
+    unreachable because `DeployOptionalParameters.Transfers` was never set.
+
+- **Validators, accounts and every other named entity now show their name.** Account-info names
+  (`account_info.info.owner.name`), CSPR.cloud's curated names and CSPR.names are requested and
+  rendered next to the key — so a client can answer *"what is Era Guardian's commission?"* instead
+  of matching hex by hand. The key is always kept alongside the name: the name is a convenience,
+  the key is the identity. Affects validators, bidders, delegators, block proposers, deploy callers,
+  transfer counterparties, contract packages, token holders and NFT owners.
+
+- **`GetHistoricalValidatorAveragePerformance` printed `Average Score: N/A` for every era.** Not an
+  `includes` bug: the SDK binds `ValidatorPerformanceData.AverageScore` to JSON `average_score`
+  while the endpoint emits `score`, so the value never deserialized. Routed through the plural
+  endpoint, whose model binds `score` correctly. For one validator that is 12,733 eras of blank
+  output now showing the real figure.
+
+- **Removed a phantom field.** `GetAccountInfo` printed an *"Undelegated Balance"* line for a
+  property the API does not return under any `includes` combination, so it was `N/A` permanently.
+  (*"Undelegating Balance"*, a real field, remains and now populates.)
+
+### Added
+
+- `NameHelpers` — one place that resolves a display name from account info, the centralized record
+  or a CSPR.name, and labels a hash with it. Account-info names are self-declared and neither
+  unique nor verified, so they are always shown beside the key, never instead of it.
+- Integration tests covering the regression: the staked balance a tool prints must be the one the
+  API holds, and a named validator must render its name.
+
+## [3.2.1] - Superseded by 3.3.0
 
 ### Added
 - **Official MCP registry listing.** `server.json` describes the `ghcr.io/msanlisavas/casper-mcp`

@@ -26,6 +26,9 @@ public static class NftTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // The owner's public key is an optional property: without it every row falls back to the
+        // raw owner hash, which no caller can match against the key they hold.
+        parameters.OptionalParameters.OwnerPublicKey = true;
 
         var result = await endpoint.NFT.GetContractPackageNFTsAsync(contractPackageHash, parameters);
 
@@ -76,6 +79,10 @@ public static class NftTools
             parameters.FilterParameters.FromBlockHeight = fromBlockHeight;
         if (!string.IsNullOrEmpty(toBlockHeight))
             parameters.FilterParameters.ToBlockHeight = toBlockHeight;
+        // Optional properties: without ContractPackage every row names its collection by hash only,
+        // and without OwnerPublicKey the owner prints as a raw hash.
+        parameters.OptionalParameters.ContractPackage = true;
+        parameters.OptionalParameters.OwnerPublicKey = true;
 
         var result = await endpoint.NFT.GetNFTsAsync(parameters);
 
@@ -88,7 +95,7 @@ public static class NftTools
         foreach (var nft in result.Data)
         {
             sb.AppendLine($"---");
-            sb.AppendLine($"- **Token ID:** {nft.TokenId ?? "N/A"} | Collection: {FormattingHelpers.FormatHash(nft.ContractPackageHash)}");
+            sb.AppendLine($"- **Token ID:** {nft.TokenId ?? "N/A"} | Collection: {NameHelpers.Labeled(nft.ContractPackage?.Name, nft.ContractPackageHash)}");
             sb.AppendLine($"  Owner: {FormattingHelpers.FormatHash(nft.OwnerPublicKey ?? nft.OwnerHash)}");
             sb.AppendLine($"  Burned: {FormattingHelpers.FormatBool(nft.IsBurned)} | Block Height: {nft.BlockHeight}");
             sb.AppendLine($"  Created: {FormattingHelpers.FormatTimestamp(nft.Timestamp)}");
@@ -114,6 +121,9 @@ public static class NftTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // The contract package is an optional property, and the Name line below reads it: without
+        // this flag it is never sent, so that line has never printed a collection name.
+        parameters.OptionalParameters.ContractPackage = true;
 
         var result = await endpoint.NFT.GetAccountNFTsAsync(accountIdentifier, parameters);
 
@@ -148,7 +158,13 @@ public static class NftTools
         [Description("The token ID")] string tokenId)
     {
         var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-        var result = await endpoint.NFT.GetNFTAsync(contractPackageHash, tokenId);
+        var parameters = new NFTRequestParameters();
+        // Optional properties: the collection name and the owner's public key are omitted unless
+        // asked for, leaving the detail view with two bare hashes.
+        parameters.OptionalParameters.ContractPackage = true;
+        parameters.OptionalParameters.OwnerPublicKey = true;
+
+        var result = await endpoint.NFT.GetNFTAsync(contractPackageHash, tokenId, parameters);
 
         if (result?.Data is null)
             return $"NFT not found: {contractPackageHash} / {tokenId}";
@@ -156,7 +172,7 @@ public static class NftTools
         var nft = result.Data;
         var sb = new StringBuilder();
         sb.AppendLine($"## NFT Details");
-        sb.AppendLine($"- **Contract Package:** {FormattingHelpers.FormatHash(nft.ContractPackageHash)}");
+        sb.AppendLine($"- **Contract Package:** {NameHelpers.Labeled(nft.ContractPackage?.Name, nft.ContractPackageHash)}");
         sb.AppendLine($"- **Token ID:** {nft.TokenId ?? "N/A"}");
         sb.AppendLine($"- **Owner:** {FormattingHelpers.FormatHash(nft.OwnerPublicKey ?? nft.OwnerHash)}");
         sb.AppendLine($"- **Burned:** {FormattingHelpers.FormatBool(nft.IsBurned)}");
@@ -241,6 +257,10 @@ public static class NftTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // The public keys on both sides of a transfer are optional properties: without them the
+        // From/To lines below fall back to raw hashes for every action.
+        parameters.OptionalParameters.FromPublicKey = true;
+        parameters.OptionalParameters.ToPublicKey = true;
 
         var result = await endpoint.NFT.GetContractPackageNFTActionsForATokenAsync(contractPackageHash, tokenId, parameters);
 
@@ -280,6 +300,11 @@ public static class NftTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // Optional properties: without ContractPackage the collection is a bare hash, and without
+        // the two public-key flags the From/To lines fall back to raw hashes.
+        parameters.OptionalParameters.ContractPackage = true;
+        parameters.OptionalParameters.FromPublicKey = true;
+        parameters.OptionalParameters.ToPublicKey = true;
 
         var result = await endpoint.NFT.GetAccountNFTActionsAsync(accountIdentifier, parameters);
 
@@ -293,7 +318,7 @@ public static class NftTools
         {
             sb.AppendLine($"---");
             sb.AppendLine($"- **Deploy:** {FormattingHelpers.FormatHash(action.DeployHash)}");
-            sb.AppendLine($"  Token: {action.TokenId ?? "N/A"} | Collection: {FormattingHelpers.FormatHash(action.ContractPackageHash)}");
+            sb.AppendLine($"  Token: {action.TokenId ?? "N/A"} | Collection: {NameHelpers.Labeled(action.ContractPackage?.Name, action.ContractPackageHash)}");
             sb.AppendLine($"  From: {FormattingHelpers.FormatHash(action.FromPublicKey ?? action.FromHash)}");
             sb.AppendLine($"  To: {FormattingHelpers.FormatHash(action.ToPublicKey ?? action.ToHash)}");
             sb.AppendLine($"  Action ID: {action.NftActionId} | {FormattingHelpers.FormatTimestamp(action.Timestamp)}");
@@ -319,6 +344,10 @@ public static class NftTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // The public keys on both sides of a transfer are optional properties: without them the
+        // From/To lines below fall back to raw hashes for every action.
+        parameters.OptionalParameters.FromPublicKey = true;
+        parameters.OptionalParameters.ToPublicKey = true;
 
         var result = await endpoint.NFT.GetContractPackageNFTActionsAsync(contractPackageHash, parameters);
 
@@ -380,6 +409,9 @@ public static class NftTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // The owner's public key is an optional property: without it this whole distribution is a
+        // list of raw hashes, which no caller can match against the key they hold.
+        parameters.OptionalParameters.OwnerPublicKey = true;
 
         var result = await endpoint.NFT.GetContractPackageNFTOwnershipAsync(contractPackageHash, parameters);
 
@@ -416,6 +448,9 @@ public static class NftTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // The contract package is an optional property, and the Name line below reads it: without
+        // this flag it is never sent, so that line has never printed a collection name.
+        parameters.OptionalParameters.ContractPackage = true;
 
         var result = await endpoint.NFT.GetAccountNFTOwnershipAsync(accountIdentifier, parameters);
 

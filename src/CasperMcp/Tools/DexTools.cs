@@ -46,6 +46,14 @@ public static class DexTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // Token names, the sender's public key and the sender's identity are all optional
+        // properties: without these flags a swap row is nothing but 64-hex hashes, and "which pair
+        // traded?" — the only question anyone asks of a swap feed — has no answer in it.
+        parameters.OptionalParameters.Token0ContractPackage = true;
+        parameters.OptionalParameters.Token1ContractPackage = true;
+        parameters.OptionalParameters.SenderPublicKey = true;
+        parameters.OptionalParameters.SenderAccountInfo = true;
+        parameters.OptionalParameters.SenderCentralizedAccountInfo = true;
 
         var result = await endpoint.Swap.GetSwapsAsync(parameters);
 
@@ -59,8 +67,8 @@ public static class DexTools
         {
             sb.AppendLine($"---");
             sb.AppendLine($"- **Transaction:** {FormattingHelpers.FormatHash(swap.TransactionHash)}");
-            sb.AppendLine($"  Sender: {FormattingHelpers.FormatHash(swap.SenderPublicKey ?? swap.SenderHash)}");
-            sb.AppendLine($"  Token0: {FormattingHelpers.FormatHash(swap.Token0ContractPackageHash)} | Token1: {FormattingHelpers.FormatHash(swap.Token1ContractPackageHash)}");
+            sb.AppendLine($"  Sender: {NameHelpers.Labeled(NameHelpers.DisplayName(swap.SenderAccountInfo, swap.SenderCentralizedAccountInfo), swap.SenderPublicKey ?? swap.SenderHash)}");
+            sb.AppendLine($"  Token0: {NameHelpers.Labeled(swap.Token0ContractPackage?.Name, swap.Token0ContractPackageHash)} | Token1: {NameHelpers.Labeled(swap.Token1ContractPackage?.Name, swap.Token1ContractPackageHash)}");
             sb.AppendLine($"  Amount0 In: {swap.Amount0In ?? "0"} | Amount1 In: {swap.Amount1In ?? "0"}");
             sb.AppendLine($"  Amount0 Out: {swap.Amount0Out ?? "0"} | Amount1 Out: {swap.Amount1Out ?? "0"}");
             sb.AppendLine($"  DEX ID: {swap.DexId?.ToString() ?? "N/A"} | Block: {swap.BlockHeight?.ToString() ?? "N/A"}");

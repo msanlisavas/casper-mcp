@@ -3,6 +3,7 @@ using System.Text;
 using CasperMcp.Configuration;
 using CasperMcp.Helpers;
 using CSPR.Cloud.Net.Clients;
+using CSPR.Cloud.Net.Parameters.OptionalParameters.Block;
 using CSPR.Cloud.Net.Parameters.Wrapper.Block;
 using ModelContextProtocol.Server;
 
@@ -18,7 +19,14 @@ public static class BlockTools
         [Description("The block hash")] string blockHash)
     {
         var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-        var block = await endpoint.Block.GetBlockAsync(blockHash);
+        // The proposer's name is an optional property: without these flags the block carries the
+        // proposer's public key only, and "who proposed this block?" answers with a raw hash.
+        var block = await endpoint.Block.GetBlockAsync(blockHash, new BlockOptionalParameters
+        {
+            ProposerAccountInfo = true,
+            ProposerCentralizedAccountInfo = true,
+            ProposerCsprName = true,
+        });
 
         if (block is null)
             return $"Block not found: {blockHash}";
@@ -30,7 +38,7 @@ public static class BlockTools
         sb.AppendLine($"- **Parent Hash:** {FormattingHelpers.FormatHash(block.ParentBlockHash)}");
         sb.AppendLine($"- **State Root Hash:** {FormattingHelpers.FormatHash(block.StateRootHash)}");
         sb.AppendLine($"- **Era ID:** {block.EraId?.ToString() ?? "N/A"}");
-        sb.AppendLine($"- **Proposer:** {FormattingHelpers.FormatHash(block.ProposerPublicKey)}");
+        sb.AppendLine($"- **Proposer:** {NameHelpers.Labeled(NameHelpers.DisplayName(block.ProposerAccountInfo, block.ProposerCentralizedAccountInfo, block.ProposerCsprName), block.ProposerPublicKey)}");
         sb.AppendLine($"- **Native Transfers:** {block.NativeTransfersNumber?.ToString() ?? "0"}");
         sb.AppendLine($"- **Contract Calls:** {block.ContractCallsNumber?.ToString() ?? "0"}");
         sb.AppendLine($"- **Switch Block:** {FormattingHelpers.FormatBool(block.IsSwitchBlock)}");

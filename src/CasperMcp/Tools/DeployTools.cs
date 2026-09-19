@@ -18,7 +18,17 @@ public static class DeployTools
         [Description("The deploy hash")] string deployHash)
     {
         var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-        var result = await endpoint.Deploy.GetDeployAsync(deployHash);
+        var parameters = new DeployRequestParameters();
+        // All optional properties. Without Transfers the "### Transfers" section below can never
+        // render — CSPR.cloud omits the array entirely — and without the identity flags the caller
+        // is a bare public key and the contract package a bare hash.
+        parameters.OptionalParameters.Transfers = true;
+        parameters.OptionalParameters.AccountInfo = true;
+        parameters.OptionalParameters.CentralizedAccountInfo = true;
+        parameters.OptionalParameters.CallerCsprName = true;
+        parameters.OptionalParameters.ContractPackage = true;
+
+        var result = await endpoint.Deploy.GetDeployAsync(deployHash, parameters);
 
         if (result?.Data is null)
             return $"Deploy not found: {deployHash}";
@@ -29,7 +39,7 @@ public static class DeployTools
         sb.AppendLine($"- **Deploy Hash:** {FormattingHelpers.FormatHash(deploy.DeployHash)}");
         sb.AppendLine($"- **Block Hash:** {FormattingHelpers.FormatHash(deploy.BlockHash)}");
         sb.AppendLine($"- **Block Height:** {deploy.BlockHeight?.ToString() ?? "N/A"}");
-        sb.AppendLine($"- **Caller:** {FormattingHelpers.FormatHash(deploy.CallerPublicKey)}");
+        sb.AppendLine($"- **Caller:** {NameHelpers.Labeled(NameHelpers.DisplayName(deploy.AccountInfo, deploy.CentralizedAccountInfo, deploy.CallerCsprName), deploy.CallerPublicKey)}");
         if (!string.IsNullOrEmpty(deploy.CallerHash))
             sb.AppendLine($"- **Caller Hash:** {FormattingHelpers.FormatHash(deploy.CallerHash)}");
         if (!string.IsNullOrEmpty(deploy.CallerCsprName))
@@ -49,7 +59,7 @@ public static class DeployTools
             sb.AppendLine($"- **Contract Hash:** {FormattingHelpers.FormatHash(deploy.ContractHash)}");
 
         if (!string.IsNullOrEmpty(deploy.ContractPackageHash))
-            sb.AppendLine($"- **Contract Package:** {FormattingHelpers.FormatHash(deploy.ContractPackageHash)}");
+            sb.AppendLine($"- **Contract Package:** {NameHelpers.Labeled(deploy.ContractPackage?.Name, deploy.ContractPackageHash)}");
 
         if (!string.IsNullOrEmpty(deploy.ErrorMessage))
             sb.AppendLine($"- **Error:** {deploy.ErrorMessage}");
@@ -80,6 +90,10 @@ public static class DeployTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // Caller names are optional properties: without these every row is an anonymous public key.
+        parameters.OptionalParameters.AccountInfo = true;
+        parameters.OptionalParameters.CentralizedAccountInfo = true;
+        parameters.OptionalParameters.CallerCsprName = true;
 
         var result = await endpoint.Deploy.GetDeploysAsync(parameters);
 
@@ -93,7 +107,7 @@ public static class DeployTools
         {
             sb.AppendLine($"---");
             sb.AppendLine($"- **Deploy Hash:** {FormattingHelpers.FormatHash(deploy.DeployHash)}");
-            sb.AppendLine($"  Caller: {FormattingHelpers.FormatHash(deploy.CallerPublicKey)}");
+            sb.AppendLine($"  Caller: {NameHelpers.Labeled(NameHelpers.DisplayName(deploy.AccountInfo, deploy.CentralizedAccountInfo, deploy.CallerCsprName), deploy.CallerPublicKey)}");
             sb.AppendLine($"  Status: {deploy.Status ?? "N/A"} | Cost: {FormattingHelpers.MotesToCspr(deploy.Cost)}");
             sb.AppendLine($"  Block Height: {deploy.BlockHeight?.ToString() ?? "N/A"} | {FormattingHelpers.FormatTimestamp(deploy.Timestamp)}");
         }
@@ -118,6 +132,10 @@ public static class DeployTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // Caller names are optional properties: without these every row is an anonymous public key.
+        parameters.OptionalParameters.AccountInfo = true;
+        parameters.OptionalParameters.CentralizedAccountInfo = true;
+        parameters.OptionalParameters.CallerCsprName = true;
 
         var result = await endpoint.Deploy.GetBlockDeploysAsync(blockHash, parameters);
 
@@ -132,7 +150,7 @@ public static class DeployTools
         {
             sb.AppendLine($"---");
             sb.AppendLine($"- **Deploy Hash:** {FormattingHelpers.FormatHash(deploy.DeployHash)}");
-            sb.AppendLine($"  Caller: {FormattingHelpers.FormatHash(deploy.CallerPublicKey)}");
+            sb.AppendLine($"  Caller: {NameHelpers.Labeled(NameHelpers.DisplayName(deploy.AccountInfo, deploy.CentralizedAccountInfo, deploy.CallerCsprName), deploy.CallerPublicKey)}");
             sb.AppendLine($"  Status: {deploy.Status ?? "N/A"} | Cost: {FormattingHelpers.MotesToCspr(deploy.Cost)}");
             sb.AppendLine($"  Timestamp: {FormattingHelpers.FormatTimestamp(deploy.Timestamp)}");
         }

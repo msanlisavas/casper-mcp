@@ -11,6 +11,13 @@ namespace CasperMcp.Tools;
 [McpServerToolType]
 public static class ContractTools
 {
+    /// <summary>
+    /// The window the contract-package deploy count covers. Unlike the other optional properties
+    /// this one is not a bool: CSPR.cloud's <c>deploys_number(N)</c> includer takes N as a number
+    /// of PAST DAYS, so the rendered count is meaningless unless the window is printed with it.
+    /// </summary>
+    private const int DeploysWindowDays = 7;
+
     [McpServerTool, Description("Get information about a Casper Network smart contract by its hash.")]
     public static async Task<string> GetContract(
         CasperCloudRestClient client,
@@ -18,7 +25,13 @@ public static class ContractTools
         [Description("The contract hash")] string contractHash)
     {
         var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-        var contract = await endpoint.Contract.GetContractAsync(contractHash);
+        var parameters = new ContractRequestParameters();
+        // The whole "Contract Package" section below reads name, description and owner off an
+        // OPTIONAL property: without this flag the response never carries it and the section
+        // silently never prints at all.
+        parameters.OptionalParameters.ContractPackage = true;
+
+        var contract = await endpoint.Contract.GetContractAsync(contractHash, parameters);
 
         if (contract is null)
             return $"Contract not found: {contractHash}";
@@ -84,6 +97,9 @@ public static class ContractTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // The package name is the only human-readable thing on a contract, and it is an optional
+        // property: without this flag every row is a wall of hashes.
+        parameters.OptionalParameters.ContractPackage = true;
 
         var result = await endpoint.Contract.GetContractsAsync(parameters);
 
@@ -97,7 +113,7 @@ public static class ContractTools
         {
             sb.AppendLine($"---");
             sb.AppendLine($"- **Contract Hash:** {FormattingHelpers.FormatHash(contract.ContractHash)}");
-            sb.AppendLine($"  Package: {FormattingHelpers.FormatHash(contract.ContractPackageHash)}");
+            sb.AppendLine($"  Package: {NameHelpers.Labeled(contract.ContractPackage?.Name, contract.ContractPackageHash)}");
             sb.AppendLine($"  Version: {contract.ContractVersion?.ToString() ?? "N/A"} | Disabled: {FormattingHelpers.FormatBool(contract.IsDisabled)}");
             sb.AppendLine($"  Timestamp: {FormattingHelpers.FormatTimestamp(contract.Timestamp)}");
         }
@@ -173,6 +189,10 @@ public static class ContractTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // Both are optional properties: without these the owner is a raw key with no name attached
+        // and the deploy count comes back null, so the row can't say whether the package is alive.
+        parameters.OptionalParameters.OwnerCsprName = true;
+        parameters.OptionalParameters.DeploysNumber = DeploysWindowDays;
 
         var result = await endpoint.Contract.GetContractPackagesAsync(parameters);
 
@@ -186,8 +206,9 @@ public static class ContractTools
         {
             sb.AppendLine($"---");
             sb.AppendLine($"- **Package Hash:** {FormattingHelpers.FormatHash(pkg.ContractPackageHash)}");
-            sb.AppendLine($"  Name: {pkg.Name ?? "N/A"} | Owner: {FormattingHelpers.FormatHash(pkg.OwnerPublicKey)}");
+            sb.AppendLine($"  Name: {pkg.Name ?? "N/A"} | Owner: {NameHelpers.Labeled(pkg.OwnerCsprName, pkg.OwnerPublicKey)}");
             sb.AppendLine($"  Created: {FormattingHelpers.FormatTimestamp(pkg.Timestamp)}");
+            sb.AppendLine($"  Deploys (last {DeploysWindowDays} days): {pkg.DeploysNumber?.ToString() ?? "N/A"}");
         }
 
         sb.AppendLine($"---");
@@ -210,15 +231,23 @@ public static class ContractTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // Every row here belongs to the one package in the header, whose name is an optional
+        // property: without this flag the header can only echo the hash the caller already had.
+        parameters.OptionalParameters.ContractPackage = true;
 
         var result = await endpoint.Contract.GetContractsByContractPackageAsync(contractPackageHash, parameters);
 
         if (result?.Data is null || result.Data.Count == 0)
             return $"No contracts found for package: {contractPackageHash}";
 
+        // Every contract in this page carries the same package; take the first name that is there.
+        var packageName = result.Data
+            .Select(c => c.ContractPackage?.Name)
+            .FirstOrDefault(n => !string.IsNullOrEmpty(n));
+
         var sb = new StringBuilder();
         sb.AppendLine($"## Contracts by Package (Page {page}, {result.ItemCount} total)");
-        sb.AppendLine($"Package: {contractPackageHash}");
+        sb.AppendLine($"Package: {NameHelpers.Labeled(packageName, contractPackageHash)}");
 
         foreach (var contract in result.Data)
         {

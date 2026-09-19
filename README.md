@@ -537,6 +537,23 @@ agent = Agent(
 
 ## Available Tools (87 tools)
 
+> **Names, not just hashes (v3.3.0).** Tools return the human-readable identity of the entities they
+> describe — validator and account names from the on-chain
+> [Account Info Standard](https://github.com/make-software/casper-account-info-contract), CSPR.cloud's
+> curated names, and CSPR.names — alongside the key, so an assistant can answer *"what is Era
+> Guardian's commission?"* without being handed 64 hex characters. The public key is always shown too:
+> account-info names are self-declared and are neither unique nor verified, so they identify nothing
+> on their own.
+>
+> This also fixed a class of silently wrong output. CSPR.cloud treats staking balances, auction
+> status, deploy transfers, contract packages and identity as
+> [optional properties](https://docs.cspr.cloud/documentation/overview/optional-properties) that are
+> omitted unless requested. Before v3.3.0 no tool requested any of them, so those fields rendered
+> `N/A` — which reads as a real zero. `GetAccountBalance` reported one mainnet account's total as
+> 109 CSPR when it held 904,257,784 CSPR delegated. See the
+> [CHANGELOG](CHANGELOG.md#330---unreleased) for the full list.
+
+
 ### Account Tools
 | Tool | Description |
 |---|---|

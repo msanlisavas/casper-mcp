@@ -3,6 +3,7 @@ using System.Text;
 using CasperMcp.Configuration;
 using CasperMcp.Helpers;
 using CSPR.Cloud.Net.Clients;
+using CSPR.Cloud.Net.Parameters.OptionalParameters.Account;
 using CSPR.Cloud.Net.Parameters.Wrapper.Accounts;
 using CSPR.Cloud.Net.Parameters.Wrapper.Contract;
 using CSPR.Cloud.Net.Parameters.Wrapper.Delegate;
@@ -14,6 +15,24 @@ namespace CasperMcp.Tools;
 [McpServerToolType]
 public static class AccountTools
 {
+
+    /// <summary>
+    /// Everything an account's identity and staking picture needs. Each of these is an OPTIONAL
+    /// property: omit the flag and CSPR.cloud omits the field, which the renderer then prints as
+    /// "N/A" — indistinguishable from a genuine zero. That understated one mainnet account's
+    /// reported total by 904,257,784 CSPR.
+    /// </summary>
+    private static AccountsOptionalParameters FullAccountDetail() => new()
+    {
+        StakedBalance = true,
+        DelegatedBalance = true,
+        UndelegatingBalance = true,
+        AuctionStatus = true,
+        AccountInfo = true,
+        CentralizedAccountInfo = true,
+        CsprName = true,
+    };
+
     [McpServerTool, Description("Get detailed information about a Casper Network account by public key or account hash, including balance, staking info, and delegation status.")]
     public static async Task<string> GetAccountInfo(
         CasperCloudRestClient client,
@@ -21,19 +40,21 @@ public static class AccountTools
         [Description("The public key or account hash of the account")] string accountIdentifier)
     {
         var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-        var account = await endpoint.Account.GetAccountAsync(accountIdentifier);
+        var account = await endpoint.Account.GetAccountAsync(accountIdentifier, FullAccountDetail());
 
         if (account is null)
             return $"Account not found: {accountIdentifier}";
 
         var sb = new StringBuilder();
+        var accountName = NameHelpers.DisplayName(account.AccountInfo, account.CentralizedAccountInfo, account.CsprName);
         sb.AppendLine($"## Account Information");
+        if (accountName is not null)
+            sb.AppendLine($"- **Name:** {accountName}");
         sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(account.PublicKey)}");
         sb.AppendLine($"- **Account Hash:** {FormattingHelpers.FormatHash(account.AccountHash)}");
         sb.AppendLine($"- **Balance:** {FormattingHelpers.MotesToCspr(account.Balance)}");
         sb.AppendLine($"- **Staked Balance:** {FormattingHelpers.MotesToCspr(account.StakedBalance)}");
         sb.AppendLine($"- **Delegated Balance:** {FormattingHelpers.MotesToCspr(account.DelegatedBalance)}");
-        sb.AppendLine($"- **Undelegated Balance:** {FormattingHelpers.MotesToCspr(account.UndelegatedBalance)}");
         sb.AppendLine($"- **Undelegating Balance:** {FormattingHelpers.MotesToCspr(account.UndelegatingBalance)}");
         sb.AppendLine($"- **Auction Status:** {account.AuctionStatus ?? "N/A"}");
         sb.AppendLine($"- **Main Purse:** {FormattingHelpers.FormatHash(account.MainPurseUref)}");
@@ -50,7 +71,7 @@ public static class AccountTools
         [Description("The public key or account hash of the account")] string accountIdentifier)
     {
         var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-        var account = await endpoint.Account.GetAccountAsync(accountIdentifier);
+        var account = await endpoint.Account.GetAccountAsync(accountIdentifier, FullAccountDetail());
 
         if (account is null)
             return $"Account not found: {accountIdentifier}";
@@ -123,6 +144,11 @@ public static class AccountTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // The counterparty here is the validator: a delegator asking where their stake sits wants
+        // "Era Guardian", not a public key they have to look up somewhere else. Optional properties,
+        // so without these flags the response carries the key alone.
+        parameters.OptionalParameters.ValidatorAccountInfo = true;
+        parameters.OptionalParameters.ValidatorCsprName = true;
 
         var result = await endpoint.Delegate.GetAccountDelegationsAsync(publicKey, parameters);
 
@@ -135,7 +161,7 @@ public static class AccountTools
         foreach (var delegation in result.Data)
         {
             sb.AppendLine($"---");
-            sb.AppendLine($"- **Validator:** {FormattingHelpers.FormatHash(delegation.ValidatorPublicKey)}");
+            sb.AppendLine($"- **Validator:** {NameHelpers.Labeled(NameHelpers.DisplayName(delegation.ValidatorAccountInfo, csprName: delegation.ValidatorCsprName), delegation.ValidatorPublicKey)}");
             sb.AppendLine($"- **Staked Amount:** {FormattingHelpers.MotesToCspr(delegation.Stake)}");
         }
 
@@ -159,6 +185,10 @@ public static class AccountTools
             PageSize = Math.Min(pageSize, 250)
         };
 
+        // Same optional-property set as the single-account views — the names are what turn a page of
+        // hashes into something a caller can read, and one flag set keeps the two from drifting.
+        parameters.OptionalParameters = FullAccountDetail();
+
         var result = await endpoint.Account.GetAccountsAsync(parameters);
 
         if (result?.Data is null || result.Data.Count == 0)
@@ -170,7 +200,7 @@ public static class AccountTools
         foreach (var account in result.Data)
         {
             sb.AppendLine($"---");
-            sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(account.PublicKey)}");
+            sb.AppendLine($"- **Public Key:** {NameHelpers.Labeled(NameHelpers.DisplayName(account.AccountInfo, account.CentralizedAccountInfo, account.CsprName), account.PublicKey)}");
             sb.AppendLine($"  Account Hash: {FormattingHelpers.FormatHash(account.AccountHash)}");
             sb.AppendLine($"  Balance: {FormattingHelpers.MotesToCspr(account.Balance)}");
         }
@@ -196,6 +226,10 @@ public static class AccountTools
             PageSize = Math.Min(pageSize, 250)
         };
 
+        // The owner's CSPR.name is an optional property, and it is the only identity this endpoint
+        // exposes (there is no AccountInfo flag on contract packages).
+        parameters.OptionalParameters.OwnerCsprName = true;
+
         var result = await endpoint.Contract.GetAccountContractPackagesAsync(publicKey, parameters);
 
         if (result?.Data is null || result.Data.Count == 0)
@@ -210,7 +244,7 @@ public static class AccountTools
             sb.AppendLine($"- **Package Hash:** {FormattingHelpers.FormatHash(pkg.ContractPackageHash)}");
             sb.AppendLine($"  Name: {pkg.Name ?? "N/A"}");
             sb.AppendLine($"  Description: {pkg.Description ?? "N/A"}");
-            sb.AppendLine($"  Owner: {FormattingHelpers.FormatHash(pkg.OwnerPublicKey)}");
+            sb.AppendLine($"  Owner: {NameHelpers.Labeled(pkg.OwnerCsprName, pkg.OwnerPublicKey)}");
             sb.AppendLine($"  Created: {FormattingHelpers.FormatTimestamp(pkg.Timestamp)}");
         }
 
@@ -235,6 +269,11 @@ public static class AccountTools
             PageSize = Math.Min(pageSize, 250)
         };
 
+        // The reward is attributed to a validator, so name the validator: optional properties, and
+        // without them every row reads as a key the caller has to resolve by hand.
+        parameters.OptionalParameters.ValidatorAccountInfo = true;
+        parameters.OptionalParameters.ValidatorCsprName = true;
+
         var result = await endpoint.Delegate.GetAccountDelegatorRewardsAsync(publicKey, parameters);
 
         if (result?.Data is null || result.Data.Count == 0)
@@ -247,7 +286,7 @@ public static class AccountTools
         {
             sb.AppendLine($"---");
             sb.AppendLine($"- **Era:** {reward.EraId?.ToString() ?? "N/A"}");
-            sb.AppendLine($"  Validator: {FormattingHelpers.FormatHash(reward.ValidatorPublicKey)}");
+            sb.AppendLine($"  Validator: {NameHelpers.Labeled(NameHelpers.DisplayName(reward.ValidatorAccountInfo, csprName: reward.ValidatorCsprName), reward.ValidatorPublicKey)}");
             sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(reward.Amount)}");
             sb.AppendLine($"  Timestamp: {FormattingHelpers.FormatTimestamp(reward.Timestamp)}");
         }
@@ -307,6 +346,11 @@ public static class AccountTools
             PageSize = Math.Min(pageSize, 250)
         };
 
+        // ValidatorAccountInfo is an optional property, and it is the only identity an undelegation
+        // row can carry for the validator — UndelegationData has no ValidatorCsprName field, so
+        // asking for CSPR.names here would buy nothing.
+        parameters.OptionalParameters.ValidatorAccountInfo = true;
+
         var result = await endpoint.Delegate.GetAccountUndelegationsAsync(publicKey, parameters);
 
         if (result?.Data is null || result.Data.Count == 0)
@@ -318,7 +362,7 @@ public static class AccountTools
         foreach (var u in result.Data)
         {
             sb.AppendLine($"---");
-            sb.AppendLine($"- **Validator:** {FormattingHelpers.FormatHash(u.ValidatorPublicKey)}");
+            sb.AppendLine($"- **Validator:** {NameHelpers.Labeled(u.ValidatorAccountInfo, u.ValidatorPublicKey)}");
             sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(u.Amount)}");
             sb.AppendLine($"  Era of Creation: {u.EraOfCreation?.ToString() ?? "N/A"} (released 7 eras later)");
             sb.AppendLine($"  Delegator Type: {(u.DelegatorIdentifierTypeId == 1 ? "Purse" : "Account")}");
@@ -347,6 +391,11 @@ public static class AccountTools
             PageSize = Math.Min(pageSize, 250)
         };
 
+        // Same as the account view: the purse's counterparty is the validator, and its name is an
+        // optional property the response omits unless asked.
+        parameters.OptionalParameters.ValidatorAccountInfo = true;
+        parameters.OptionalParameters.ValidatorCsprName = true;
+
         var result = await endpoint.Delegate.GetPurseDelegationsAsync(purseUref, parameters);
 
         if (result?.Data is null || result.Data.Count == 0)
@@ -358,7 +407,7 @@ public static class AccountTools
         foreach (var delegation in result.Data)
         {
             sb.AppendLine($"---");
-            sb.AppendLine($"- **Validator:** {FormattingHelpers.FormatHash(delegation.ValidatorPublicKey)}");
+            sb.AppendLine($"- **Validator:** {NameHelpers.Labeled(NameHelpers.DisplayName(delegation.ValidatorAccountInfo, csprName: delegation.ValidatorCsprName), delegation.ValidatorPublicKey)}");
             sb.AppendLine($"- **Staked Amount:** {FormattingHelpers.MotesToCspr(delegation.Stake)}");
         }
 
@@ -383,6 +432,10 @@ public static class AccountTools
             PageSize = Math.Min(pageSize, 250)
         };
 
+        // As above: the validator's name is optional, so ask for it or every row is a bare key.
+        parameters.OptionalParameters.ValidatorAccountInfo = true;
+        parameters.OptionalParameters.ValidatorCsprName = true;
+
         var result = await endpoint.Delegate.GetPurseDelegationRewardsAsync(purseUref, parameters);
 
         if (result?.Data is null || result.Data.Count == 0)
@@ -395,7 +448,7 @@ public static class AccountTools
         {
             sb.AppendLine($"---");
             sb.AppendLine($"- **Era:** {reward.EraId?.ToString() ?? "N/A"}");
-            sb.AppendLine($"  Validator: {FormattingHelpers.FormatHash(reward.ValidatorPublicKey)}");
+            sb.AppendLine($"  Validator: {NameHelpers.Labeled(NameHelpers.DisplayName(reward.ValidatorAccountInfo, csprName: reward.ValidatorCsprName), reward.ValidatorPublicKey)}");
             sb.AppendLine($"  Amount: {FormattingHelpers.MotesToCspr(reward.Amount)}");
             sb.AppendLine($"  Timestamp: {FormattingHelpers.FormatTimestamp(reward.Timestamp)}");
         }

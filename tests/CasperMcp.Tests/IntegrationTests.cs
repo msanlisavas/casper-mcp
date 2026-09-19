@@ -1049,4 +1049,54 @@ public class IntegrationTests : IAsyncLifetime
         // Could be "No era rewards" or actual data - both valid
         Assert.DoesNotContain("Error", result);
     }
+
+    // ==================== Optional properties (v3.3.0) ====================
+    // CSPR.cloud omits optional response fields unless the request asks for them via `includes`.
+    // Every tool below printed a field it never requested, so the line rendered "N/A" forever -
+    // indistinguishable from a real zero. TestPublicKey is validator "MAKE" on testnet: it has a
+    // real staked balance and an account-info name, so these assertions rest on live data.
+
+    [Fact]
+    public async Task GetAccountInfo_Reports_The_Staked_Balance_It_Prints()
+    {
+        var result = await AccountTools.GetAccountInfo(_client, _options, TestPublicKey);
+
+        Assert.DoesNotContain("**Staked Balance:** N/A", result);
+        Assert.DoesNotContain("**Auction Status:** N/A", result);
+    }
+
+    [Fact]
+    public async Task GetAccountInfo_Shows_The_Account_Info_Name()
+    {
+        var result = await AccountTools.GetAccountInfo(_client, _options, TestPublicKey);
+
+        Assert.Contains("MAKE", result);
+    }
+
+    [Fact]
+    public async Task GetAccountBalance_Total_Is_Not_Silently_Liquid_Only()
+    {
+        // The line is labelled "Total (liquid + staked + delegated)". On mainnet this understated
+        // one account by 904,257,784 CSPR because both components were N/A and the total was the
+        // liquid balance alone.
+        var result = await AccountTools.GetAccountBalance(_client, _options, TestPublicKey);
+
+        Assert.DoesNotContain("**Staked Balance:** N/A", result);
+    }
+
+    [Fact]
+    public async Task GetValidators_Shows_Validator_Names_Not_Just_Keys()
+    {
+        var result = await ValidatorTools.GetValidators(_client, _options, 1, 250);
+
+        Assert.Contains("MAKE", result);
+    }
+
+    [Fact]
+    public async Task GetValidatorInfo_Shows_The_Validator_Name()
+    {
+        var result = await ValidatorTools.GetValidatorInfo(_client, _options, TestPublicKey);
+
+        Assert.Contains("MAKE", result);
+    }
 }

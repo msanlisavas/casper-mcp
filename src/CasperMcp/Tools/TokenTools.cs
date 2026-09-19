@@ -18,6 +18,9 @@ public static class TokenTools
         [Description("The contract package hash of the fungible token")] string contractPackageHash)
     {
         var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        // DeploysNumber below is an optional property, but the single-package endpoint takes no
+        // parameters object in CSPR.Cloud.Net 3.0.0 — there is no flag to set, so "Deploys" stays
+        // "N/A" until the SDK exposes one. Do not "fix" it by inventing a flag.
         var result = await endpoint.Contract.GetContractPackageAsync(contractPackageHash);
 
         if (result?.Data is null)
@@ -54,6 +57,11 @@ public static class TokenTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // Holder names are optional properties: without these the response carries account hashes
+        // only, and "who are this token's biggest holders?" can be answered in hex alone.
+        parameters.OptionalParameters.AccountInfo = true;
+        parameters.OptionalParameters.CentralizedAccountInfo = true;
+        parameters.OptionalParameters.OwnerCsprName = true;
 
         var result = await endpoint.FT.GetContractPackageFTOwnershipAsync(contractPackageHash, parameters);
 
@@ -66,7 +74,7 @@ public static class TokenTools
         foreach (var holder in result.Data)
         {
             sb.AppendLine($"---");
-            sb.AppendLine($"- **Owner:** {FormattingHelpers.FormatHash(holder.OwnerHash)}");
+            sb.AppendLine($"- **Owner:** {NameHelpers.Labeled(NameHelpers.DisplayName(holder.AccountInfo, holder.CentralizedAccountInfo, holder.OwnerCsprName), holder.OwnerHash)}");
             sb.AppendLine($"  Balance: {holder.Balance ?? "N/A"}");
         }
 
@@ -90,6 +98,9 @@ public static class TokenTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // ContractPackage is an optional property, and the renderer below prints its Name: without
+        // this flag it is never sent, so the "Name:" line has never appeared for any token.
+        parameters.OptionalParameters.ContractPackage = true;
 
         var result = await endpoint.FT.GetAccountFTOwnershipAsync(accountIdentifier, parameters);
 
@@ -127,6 +138,11 @@ public static class TokenTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // The public keys and the token's package are optional properties: without these flags
+        // From/To always fall back to a raw account hash and the token is a bare package hash.
+        parameters.OptionalParameters.FromPublicKey = true;
+        parameters.OptionalParameters.ToPublicKey = true;
+        parameters.OptionalParameters.ContractPackage = true;
 
         var result = await endpoint.FT.GetFTActionsAsync(parameters);
 
@@ -140,7 +156,7 @@ public static class TokenTools
         {
             sb.AppendLine($"---");
             sb.AppendLine($"- **Deploy:** {FormattingHelpers.FormatHash(action.DeployHash)}");
-            sb.AppendLine($"  Token: {FormattingHelpers.FormatHash(action.ContractPackageHash)}");
+            sb.AppendLine($"  Token: {NameHelpers.Labeled(action.ContractPackage?.Name, action.ContractPackageHash)}");
             sb.AppendLine($"  From: {FormattingHelpers.FormatHash(action.FromPublicKey ?? action.FromHash)}");
             sb.AppendLine($"  To: {FormattingHelpers.FormatHash(action.ToPublicKey ?? action.ToHash)}");
             sb.AppendLine($"  Amount: {action.Amount ?? "N/A"} | {FormattingHelpers.FormatTimestamp(action.Timestamp)}");
@@ -166,6 +182,11 @@ public static class TokenTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // The public keys and the token's package are optional properties: without these flags
+        // From/To always fall back to a raw account hash and the token is a bare package hash.
+        parameters.OptionalParameters.FromPublicKey = true;
+        parameters.OptionalParameters.ToPublicKey = true;
+        parameters.OptionalParameters.ContractPackage = true;
 
         var result = await endpoint.FT.GetAccountFTActionsAsync(accountIdentifier, parameters);
 
@@ -179,7 +200,7 @@ public static class TokenTools
         {
             sb.AppendLine($"---");
             sb.AppendLine($"- **Deploy:** {FormattingHelpers.FormatHash(action.DeployHash)}");
-            sb.AppendLine($"  Token: {FormattingHelpers.FormatHash(action.ContractPackageHash)}");
+            sb.AppendLine($"  Token: {NameHelpers.Labeled(action.ContractPackage?.Name, action.ContractPackageHash)}");
             sb.AppendLine($"  From: {FormattingHelpers.FormatHash(action.FromPublicKey ?? action.FromHash)}");
             sb.AppendLine($"  To: {FormattingHelpers.FormatHash(action.ToPublicKey ?? action.ToHash)}");
             sb.AppendLine($"  Amount: {action.Amount ?? "N/A"} | {FormattingHelpers.FormatTimestamp(action.Timestamp)}");
@@ -205,6 +226,11 @@ public static class TokenTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // The public keys are optional properties: without these flags From/To always fall back to
+        // a raw account hash. ContractPackage is left off on purpose here — every row is the package
+        // the caller named, and nothing in this view renders it.
+        parameters.OptionalParameters.FromPublicKey = true;
+        parameters.OptionalParameters.ToPublicKey = true;
 
         var result = await endpoint.FT.GetContractPackageFTActionsAsync(contractPackageHash, parameters);
 

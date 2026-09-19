@@ -34,6 +34,11 @@ public static class ValidatorTools
             PageSize = Math.Min(pageSize, 250)
         };
         parameters.FilterParameters.EraId = currentEraId;
+        // Names are optional properties: without these the response carries public keys only, and
+        // no caller can answer "what is Era Guardian's fee?" from it.
+        parameters.OptionalParameters.AccountInfo = true;
+        parameters.OptionalParameters.CentralizedAccountInfo = true;
+        parameters.OptionalParameters.CsprName = true;
 
         var result = await endpoint.Validator.GetValidatorsAsync(parameters);
 
@@ -45,8 +50,9 @@ public static class ValidatorTools
 
         foreach (var v in result.Data)
         {
+            var name = NameHelpers.DisplayName(v.AccountInfo, v.CentralizedAccountInfo, v.CsprName);
             sb.AppendLine($"---");
-            sb.AppendLine($"- **Rank #{v.Rank}** | **Active:** {FormattingHelpers.FormatBool(v.IsActive)}");
+            sb.AppendLine($"- **Rank #{v.Rank}**{(name is null ? "" : $" | **{name}**")} | **Active:** {FormattingHelpers.FormatBool(v.IsActive)}");
             sb.AppendLine($"  Public Key: {FormattingHelpers.FormatHash(v.PublicKey)}");
             sb.AppendLine($"  Fee: {FormattingHelpers.FormatPercentage(v.Fee)} | Delegators: {FormattingHelpers.FormatNumber(v.DelegatorsNumber)}");
             sb.AppendLine($"  Self Stake: {FormattingHelpers.MotesToCspr(v.SelfStake)} | Delegators Stake: {FormattingHelpers.MotesToCspr(v.DelegatorsStake)}");
@@ -76,6 +82,9 @@ public static class ValidatorTools
 
         var parameters = new ValidatorRequestParameters();
         parameters.FilterParameters.EraId = currentEraId;
+        parameters.OptionalParameters.AccountInfo = true;
+        parameters.OptionalParameters.CentralizedAccountInfo = true;
+        parameters.OptionalParameters.CsprName = true;
         var result = await endpoint.Validator.GetValidatorAsync(publicKey, parameters);
 
         if (result?.Data is null)
@@ -83,7 +92,10 @@ public static class ValidatorTools
 
         var v = result.Data;
         var sb = new StringBuilder();
+        var validatorName = NameHelpers.DisplayName(v.AccountInfo, v.CentralizedAccountInfo, v.CsprName);
         sb.AppendLine($"## Validator Information");
+        if (validatorName is not null)
+            sb.AppendLine($"- **Name:** {validatorName}");
         sb.AppendLine($"- **Rank:** #{v.Rank}");
         sb.AppendLine($"- **Public Key:** {FormattingHelpers.FormatHash(v.PublicKey)}");
         sb.AppendLine($"- **Active:** {FormattingHelpers.FormatBool(v.IsActive)}");
@@ -113,6 +125,10 @@ public static class ValidatorTools
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        // The delegator is the interesting party here, so ask for the delegator's identity.
+        parameters.OptionalParameters.AccountInfo = true;
+        parameters.OptionalParameters.CentralizedAccountInfo = true;
+        parameters.OptionalParameters.CsprName = true;
 
         var result = await endpoint.Delegate.GetValidatorDelegationsAsync(publicKey, parameters);
 
@@ -125,7 +141,7 @@ public static class ValidatorTools
         foreach (var delegation in result.Data)
         {
             sb.AppendLine($"---");
-            sb.AppendLine($"- **Delegator:** {FormattingHelpers.FormatHash(delegation.PublicKey)}");
+            sb.AppendLine($"- **Delegator:** {NameHelpers.Labeled(NameHelpers.DisplayName(delegation.AccountInfo, delegation.CentralizedAccountInfo, delegation.CsprName), delegation.PublicKey)}");
             sb.AppendLine($"  Staked Amount: {FormattingHelpers.MotesToCspr(delegation.Stake)}");
         }
 
@@ -232,13 +248,20 @@ public static class ValidatorTools
         [Description("Number of results per page (default: 10, max: 250)")] int pageSize = 10)
     {
         var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
-        var parameters = new ValidatorHistoricalAveragePerformanceRequestParameters
+
+        // The singular SDK call binds its score to "average_score", but
+        // /validators/{pk}/relative-average-performances emits "score" — so ValidatorPerformanceData
+        // .AverageScore is null for every era and this tool printed "Average Score: N/A" forever.
+        // The plural endpoint returns the same rows with a Score the SDK does bind, and its filter
+        // narrows to one validator (public_key=...), so we ask it for just the requested key.
+        var parameters = new ValidatorsHistoricalAveragePerformanceRequestParameters
         {
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
+        parameters.FilterParameters.PublicKeys = [publicKey];
 
-        var result = await endpoint.Validator.GetHistoricalValidatorAveragePerformanceAsync(publicKey, parameters);
+        var result = await endpoint.Validator.GetHistoricalValidatorsAveragePerformanceAsync(parameters);
 
         if (result?.Data is null || result.Data.Count == 0)
             return $"No average performance data found for validator: {publicKey}";
@@ -248,7 +271,7 @@ public static class ValidatorTools
 
         foreach (var perf in result.Data)
         {
-            sb.AppendLine($"- **Era {perf.EraId?.ToString() ?? "N/A"}:** Average Score: {FormattingHelpers.FormatDouble(perf.AverageScore)}");
+            sb.AppendLine($"- **Era {perf.EraId?.ToString() ?? "N/A"}:** Average Score: {FormattingHelpers.FormatDouble(perf.Score)}");
         }
 
         sb.AppendLine($"---");
