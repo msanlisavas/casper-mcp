@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.1] - 2026-09-19
+
+### Fixed
+
+- **Upgraded CSPR.Cloud.Net 3.0.0 → 4.3.0, which fixes two more silently-wrong fields.**
+  `GetAccountUndelegations` rendered `Era of Creation: N/A` for every withdrawal, and its
+  `Delegator Type` line read `Account` on every row regardless of the truth — both because the SDK
+  bound those properties to JSON keys the API never emits (`era_of_creation` and
+  `delegator_identifier_type_id`; the wire names are `era_id` and `withdrawal_type_id`). The type id
+  is non-nullable, so it read 0 — which means "public key" — and a purse withdrawal was reported as
+  an account withdrawal with no way for a caller to tell. Fixed upstream in CSPR.Cloud.Net 4.3.0.
+- **Removed the v3.3.0 workaround for the average-performance score.** That release routed
+  `GetHistoricalValidatorAveragePerformance` through the plural endpoint because
+  `ValidatorPerformanceData.AverageScore` was bound to `average_score` while the API emits `score`.
+  CSPR.Cloud.Net 4.3.0 binds it correctly, so the tool calls the singular endpoint it was always
+  meant to use.
+
+### Changed
+
+- `FormattingHelpers` gained `decimal?` overloads of `FormatPercentage` and `FormatDouble`.
+  CSPR.Cloud.Net 4.0.0 retyped every rate, fee and share from `float?`/`double?` to `decimal?` —
+  money should not round-trip through binary floating point — and the tools now bind to those.
+
 ## [3.3.0] - 2026-09-19
 
 ### Fixed

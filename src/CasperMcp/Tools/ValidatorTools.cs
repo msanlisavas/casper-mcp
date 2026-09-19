@@ -249,19 +249,13 @@ public static class ValidatorTools
     {
         var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
 
-        // The singular SDK call binds its score to "average_score", but
-        // /validators/{pk}/relative-average-performances emits "score" — so ValidatorPerformanceData
-        // .AverageScore is null for every era and this tool printed "Average Score: N/A" forever.
-        // The plural endpoint returns the same rows with a Score the SDK does bind, and its filter
-        // narrows to one validator (public_key=...), so we ask it for just the requested key.
-        var parameters = new ValidatorsHistoricalAveragePerformanceRequestParameters
+        var parameters = new ValidatorHistoricalAveragePerformanceRequestParameters
         {
             PageNumber = page,
             PageSize = Math.Min(pageSize, 250)
         };
-        parameters.FilterParameters.PublicKeys = [publicKey];
 
-        var result = await endpoint.Validator.GetHistoricalValidatorsAveragePerformanceAsync(parameters);
+        var result = await endpoint.Validator.GetHistoricalValidatorAveragePerformanceAsync(publicKey, parameters);
 
         if (result?.Data is null || result.Data.Count == 0)
             return $"No average performance data found for validator: {publicKey}";
@@ -271,7 +265,7 @@ public static class ValidatorTools
 
         foreach (var perf in result.Data)
         {
-            sb.AppendLine($"- **Era {perf.EraId?.ToString() ?? "N/A"}:** Average Score: {FormattingHelpers.FormatDouble(perf.Score)}");
+            sb.AppendLine($"- **Era {perf.EraId?.ToString() ?? "N/A"}:** Average Score: {FormattingHelpers.FormatDouble(perf.AverageScore)}");
         }
 
         sb.AppendLine($"---");

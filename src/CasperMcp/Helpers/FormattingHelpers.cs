@@ -66,6 +66,17 @@ public static class FormattingHelpers
         return string.Format(Inv, "{0:F2}%", value.Value);
     }
 
+    /// <summary>
+    /// CSPR.Cloud.Net 4.0.0 retyped every rate, fee and share from float?/double? to decimal? —
+    /// money must not round-trip through binary floating point. This overload is what the tools
+    /// now bind to.
+    /// </summary>
+    public static string FormatPercentage(decimal? value)
+    {
+        if (value is null) return "N/A";
+        return string.Format(Inv, "{0:F2}%", value.Value);
+    }
+
     public static string FormatPercentage(string? value)
     {
         if (string.IsNullOrEmpty(value)) return "N/A";
@@ -93,6 +104,13 @@ public static class FormattingHelpers
     public static string FormatBool(bool value) => value ? "Yes" : "No";
 
     public static string FormatDouble(double? value)
+    {
+        if (value is null) return "N/A";
+        return value.Value.ToString("F4", Inv);
+    }
+
+    /// <summary>Decimal counterpart — see <see cref="FormatPercentage(decimal?)"/>.</summary>
+    public static string FormatDouble(decimal? value)
     {
         if (value is null) return "N/A";
         return value.Value.ToString("F4", Inv);
