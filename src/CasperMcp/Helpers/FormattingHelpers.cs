@@ -21,6 +21,17 @@ public static class FormattingHelpers
         return FormatMotes(value);
     }
 
+    /// <summary>
+    /// For amounts CSPR.cloud already reports in whole CSPR, such as /supply's total and circulating
+    /// (13549811451 in its documented example, a 13.5-billion-CSPR supply). Running those through
+    /// <see cref="MotesToCspr(ulong?)"/> divides them by 10^9 a second time.
+    /// </summary>
+    public static string FormatWholeCspr(ulong? cspr)
+    {
+        if (cspr is null) return "N/A";
+        return string.Format(Inv, "{0:N0} CSPR", cspr.Value);
+    }
+
     private static string FormatMotes(BigInteger motes)
     {
         var whole = BigInteger.DivRem(motes, MotesToCsprDivisor, out var fraction);

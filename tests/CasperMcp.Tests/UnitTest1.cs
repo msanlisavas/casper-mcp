@@ -16,6 +16,18 @@ public class FormattingHelpersTests
         Assert.Equal(expected, result);
     }
 
+    [Theory]
+    [InlineData(20_182_293_198UL, "20,182,293,198 CSPR")]
+    [InlineData(13_549_811_451UL, "13,549,811,451 CSPR")]
+    [InlineData(0UL, "0 CSPR")]
+    public void FormatWholeCspr_PrintsTheSupplyAsCsprNotMotes(ulong cspr, string expected)
+    {
+        // /supply reports whole CSPR. Through MotesToCspr the 20-billion-CSPR total printed as
+        // "20.182293250 CSPR".
+        Assert.Equal(expected, FormattingHelpers.FormatWholeCspr(cspr));
+        Assert.Equal("N/A", FormattingHelpers.FormatWholeCspr(null));
+    }
+
     [Fact]
     public void MotesToCspr_NullUlong_ReturnsNA()
     {

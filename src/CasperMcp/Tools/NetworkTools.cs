@@ -69,8 +69,10 @@ public static class NetworkTools
         var sb = new StringBuilder();
         sb.AppendLine($"## CSPR Supply Information");
         sb.AppendLine($"- **Token:** {supply.Token ?? "CSPR"}");
-        sb.AppendLine($"- **Total Supply:** {FormattingHelpers.MotesToCspr(supply.Total)}");
-        sb.AppendLine($"- **Circulating Supply:** {FormattingHelpers.MotesToCspr(supply.Circulating)}");
+        // /supply reports whole CSPR, not motes (live 2026-11-12: total 20182293198); through
+        // MotesToCspr these printed as "20.182293250 CSPR".
+        sb.AppendLine($"- **Total Supply:** {FormattingHelpers.FormatWholeCspr(supply.Total)}");
+        sb.AppendLine($"- **Circulating Supply:** {FormattingHelpers.FormatWholeCspr(supply.Circulating)}");
 
         if (supply.TotalAnnualIssuance is not null)
             sb.AppendLine($"- **Total Annual Issuance:** {supply.TotalAnnualIssuance.Value:P4}");

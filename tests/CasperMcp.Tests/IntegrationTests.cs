@@ -83,6 +83,15 @@ public class IntegrationTests : IAsyncLifetime
         // Supply endpoint may not be available on testnet — just verify it doesn't crash
         Assert.NotNull(result);
         Assert.NotEmpty(result);
+
+        // When it is, the supply is billions of CSPR, never a motes-style "20.182293250 CSPR".
+        var total = System.Text.RegularExpressions.Regex.Match(result, @"\*\*Total Supply:\*\* ([\d,]+(?:\.\d+)?) CSPR");
+        if (total.Success)
+        {
+            Assert.DoesNotContain(".", total.Groups[1].Value);
+            Assert.True(decimal.Parse(total.Groups[1].Value.Replace(",", ""), System.Globalization.CultureInfo.InvariantCulture) > 1_000_000m,
+                $"total supply reads as motes: {total.Value}");
+        }
     }
 
     // ==================== Block Tools ====================
