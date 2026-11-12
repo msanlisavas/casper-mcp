@@ -1,8 +1,10 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Text;
 using CasperMcp.Configuration;
 using CasperMcp.Helpers;
 using CSPR.Cloud.Net.Clients;
+using CSPR.Cloud.Net.Objects.Validator;
 using CSPR.Cloud.Net.Parameters.Wrapper.Block;
 using CSPR.Cloud.Net.Parameters.Wrapper.Delegate;
 using CSPR.Cloud.Net.Parameters.Wrapper.Validator;
@@ -61,9 +63,30 @@ public static class ValidatorTools
         }
 
         sb.AppendLine($"---");
+        if (DelegatorsSummary(result.Data, result.ItemCount) is { } summary)
+            sb.AppendLine(summary);
         sb.AppendLine($"Page {page} of {result.PageCount}");
 
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// The network-wide delegator figure an agent is otherwise left to add up by hand, printed only
+    /// when the page holds every validator of the era, so the sum is never a partial one. It costs no
+    /// request: each row already carries its delegators_number. A delegator is counted once per
+    /// validator it stakes with, which the line says, so it is never read as distinct accounts.
+    /// </summary>
+    public static string? DelegatorsSummary(IReadOnlyCollection<ValidatorData> validators, int itemCount)
+    {
+        if (validators.Count == 0 || validators.Count != itemCount)
+            return null;
+
+        ulong delegators = 0;
+        foreach (var v in validators)
+            delegators += v.DelegatorsNumber ?? 0;
+
+        return $"**Delegators summed over all {validators.Count.ToString("N0", CultureInfo.InvariantCulture)} validators:** " +
+               $"{FormattingHelpers.FormatNumber(delegators)} (an account delegating to several validators is counted once for each)";
     }
 
     [McpServerTool, Description("Get detailed information about a specific Casper Network validator by public key.")]
