@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2026-11-12
+
+### Fixed
+
+- **`GetSupplyInfo` printed the CSPR supply a billion times too small.** CSPR.cloud's `/supply`
+  reports `total` and `circulating` in whole CSPR (its documented example is `13549811451`, a
+  13.5-billion-CSPR supply), but the tool ran both through the motes-to-CSPR conversion and divided
+  them by 10^9 again: the live mainnet total of 20,182,293,198 CSPR printed as `20.182293250 CSPR`.
+  An agent relaying that told a user the circulating supply was "17.27 CSPR out of 19.97 CSPR". Both
+  figures now print as whole CSPR (`20,182,293,198 CSPR`).
+
+### Added
+
+- **`GetNetworkActivity` (`get_network_activity`) counts the last 1 to 24 hours of the network.**
+  CSPR.cloud has no statistics endpoint, so "how many transactions a day?", "how many native
+  transfers?" or "how much was paid in fees today?" had no tool. Parameter `hours` (1–24, default
+  24), counted back from the latest block. It reports the window (heights, block count, times),
+  the average block time, transactions with their categories (native transfers, auction,
+  install/upgrade, small, medium, large), CSPR.cloud's contract-call count (which overlaps those
+  categories, so it is never added to the total), failed transactions, fees paid (cost minus refund)
+  and distinct senders.
+
+  `/blocks` ignores height and time filters, so the tool pages it newest-first, four pages at a time,
+  and sums each block's counters; `/deploys` is paged for the same blocks' failures, fees and senders,
+  stopping once transaction times pass the window by mainnet's 2-hour `max_ttl`. Over 1,000 mainnet
+  blocks the categories summed to exactly `/deploys`' count for the same heights, and a one-hour
+  window matched a direct API count to the mote. A 24-hour window reads about 53 pages in about
+  4 seconds. Blocks that land during the read are de-duplicated; a higher page served before a lower
+  one can skip blocks, and repair rounds re-read whichever pages now hold them. Rate-limited pages are
+  retried with backoff, and the output says when a read hit its page limit or a block could not be read.
+
+- **`GetValidators` sums the delegators when one page holds every validator.** "How many delegators
+  are on Casper?" left an agent adding up 69 numbers. With a page size that covers the era's whole set,
+  the tool now prints `Delegators summed over all 69 validators: 16,773`, noting that an account
+  delegating to several validators is counted once for each. A partial page prints no sum, so it is
+  never read as the network's total. No extra request.
+
 ## [3.3.1] - 2026-09-19
 
 ### Fixed

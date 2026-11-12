@@ -535,7 +535,7 @@ agent = Agent(
 )
 ```
 
-## Available Tools (87 tools)
+## Available Tools (88 tools)
 
 > **Names, not just hashes (v3.3.0).** Tools return the human-readable identity of the entities they
 > describe — validator and account names from the on-chain
@@ -589,7 +589,7 @@ agent = Agent(
 ### Validator Tools
 | Tool | Description |
 |---|---|
-| `GetValidators` | List validators with stake, fee, and performance data |
+| `GetValidators` | List validators with stake, fee, and performance data; a page holding every validator also sums their delegators |
 | `GetValidatorInfo` | Get detailed info about a specific validator |
 | `GetValidatorDelegations` | Get delegations to a specific validator |
 | `GetValidatorRewards` | Get rewards earned by a validator |
@@ -662,6 +662,7 @@ agent = Agent(
 | `GetNetworkStatus` | Get network status — active validators, era, total stake |
 | `GetEraInfo` | Get current era information |
 | `GetSupplyInfo` | Get CSPR total and circulating supply |
+| `GetNetworkActivity` | Count the last 1–24 hours: blocks, transactions by category, native transfers, contract calls, failures, fees paid and distinct senders |
 
 ### Bidder Tools
 | Tool | Description |
@@ -791,7 +792,7 @@ casper-mcp/
 │   ├── Middleware/        # HTTP middleware (per-agent key check, apikey auth)
 │   ├── Observability/     # OpenTelemetry wiring, tool telemetry, key fingerprint
 │   ├── Remote/            # Per-request client factory, header parsing, error mapping, tool filter
-│   ├── Tools/             # MCP tool implementations (82 read + 5 stdio-only write)
+│   ├── Tools/             # MCP tool implementations (83 read + 5 stdio-only write)
 │   ├── Writes/            # Local signer: fail-closed policy engine, ledger, introspector, builder
 │   └── Program.cs         # Entry point, DI setup, dual transport
 ├── tests/CasperMcp.Tests/ # Unit + middleware + integration + HTTP-pipeline tests
