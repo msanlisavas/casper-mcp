@@ -94,6 +94,19 @@ public class IntegrationTests : IAsyncLifetime
         }
     }
 
+    [Fact]
+    public async Task GetNetworkActivity_OneHour_CountsTheWindow()
+    {
+        var result = await NetworkTools.GetNetworkActivity(_client, _options, hours: 1);
+
+        Assert.DoesNotContain("Error", result);
+        Assert.Contains("## Network Activity (Testnet, last 1 hour)", result);
+        Assert.Contains("- **Transactions:** ", result);
+        Assert.Contains("Native Transfers: ", result);
+        Assert.Contains("- **Fees Paid (cost minus refund):** ", result);
+        Assert.DoesNotContain("could not be read", result);
+    }
+
     // ==================== Block Tools ====================
 
     [Fact]

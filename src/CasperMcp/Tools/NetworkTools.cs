@@ -3,6 +3,8 @@ using System.Text;
 using CasperMcp.Configuration;
 using CasperMcp.Helpers;
 using CSPR.Cloud.Net.Clients;
+using CSPR.Cloud.Net.Parameters.Wrapper.Block;
+using CSPR.Cloud.Net.Parameters.Wrapper.Deploy;
 using ModelContextProtocol.Server;
 
 namespace CasperMcp.Tools;
@@ -52,6 +54,29 @@ public static class NetworkTools
         sb.AppendLine($"- **Total Active Era Stake:** {FormattingHelpers.MotesToCspr(metrics.TotalActiveEraStake)}");
 
         return sb.ToString();
+    }
+
+    [McpServerTool, Description("Get network activity over the last N hours (1 to 24, default 24), counted back from the latest block: blocks and average block time, transactions with their categories (native transfers, auction, install/upgrade, small, medium, large), contract calls, failed transactions, fees paid (cost minus refund) and distinct senders. Covers at most the last 24 hours.")]
+    public static async Task<string> GetNetworkActivity(
+        CasperCloudRestClient client,
+        CasperMcpOptions options,
+        [Description("Hours to count back from the latest block, 1 to 24 (default: 24)")] int hours = 24,
+        CancellationToken cancellationToken = default)
+    {
+        var endpoint = options.IsTestnet ? (INetworkEndpoint)client.Testnet : client.Mainnet;
+        var limits = new NetworkActivityLimits();
+
+        // No optional properties on either list: the counters, costs and callers are all base fields.
+        var report = await NetworkActivity.ComputeAsync(
+            (page, ct) => endpoint.Block.GetBlocksAsync(
+                new BlockRequestParameters { PageNumber = page, PageSize = limits.PageSize }, ct),
+            (page, ct) => endpoint.Deploy.GetDeploysAsync(
+                new DeploysRequestParameters { PageNumber = page, PageSize = limits.PageSize }, ct),
+            hours,
+            cancellationToken,
+            limits);
+
+        return report is null ? "No blocks found." : NetworkActivity.Format(report, options.IsTestnet);
     }
 
     [McpServerTool, Description("Get CSPR token supply information including total and circulating supply.")]
